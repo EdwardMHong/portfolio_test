@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edward Hong — Portfolio</title>
+
+  <!-- Tailwind CDN for quick styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Custom colors & subtle utilities */
+    :root {
+      --ed-indigo: #4f46e5;
+      --muted: #6b7280;
+    }
+
+    /* Moving background blobs */
+    .blob {
+      position: absolute;
+      filter: blur(28px);
+      opacity: .12;
+      border-radius: 28px;
+      transform-origin: center;
+    }
+    @keyframes floatA {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(-36px) translateX(8px) rotate(6deg); }
+      100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    }
+    @keyframes floatB {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(48px) translateX(-12px) rotate(-6deg); }
+      100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    }
+
+    .blob.a { animation: floatA 8s linear infinite; }
+    .blob.b { animation: floatB 10s linear infinite; }
+
+    /* Droplet bobbing (used for the contact-angle prototype) */
+    @keyframes bob {
+      0%   { transform: translateY(0); }
+      50%  { transform: translateY(-8px); }
+      100% { transform: translateY(0); }
+    }
+    .droplet-bob { animation: bob 1.6s ease-in-out infinite; transform-origin: center; }
+
+    /* Reveal on scroll */
+    .reveal { opacity: 0; transform: translateY(10px); transition: all .55s cubic-bezier(.22,.9,.35,1); }
+    .reveal.show { opacity: 1; transform: translateY(0); }
+
+    /* Simple modal styles */
+    .modal-backdrop { background: rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body class="antialiased bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
+
+  <!-- Header with animated blobs (inspired by your PPTX visual language) -->
+  <header class="relative overflow-hidden pb-8">
+    <div class="max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold">Edward Hong</h1>
+        <p class="text-sm text-slate-600">Nanotechnology Engineer — prototyping &amp; materials R&amp;D</p>
+      </div>
+      <nav class="hidden md:flex gap-4 text-sm items-center">
+        <a href="#education" class="hover:underline">Education</a>
+        <a href="#experience" class="hover:underline">Experience</a>
+        <a href="#prototypes" class="hover:underline">Prototypes</a>
+        <a href="#contact" class="px-3 py-1 rounded-md bg-[color:var(--ed-indigo)] text-white">Contact</a>
+      </nav>
+    </div>
+
+    <!-- moving translucent blobs -->
+    <div aria-hidden="true">
+      <div class="blob a -left-16 -top-6 w-80 h-64 bg-gradient-to-tr from-[color:var(--ed-indigo)] to-indigo-200"></div>
+      <div class="blob b right-6 top-12 w-64 h-48 bg-gradient-to-tr from-indigo-100 to-white"></div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 pb-20">
+    <!-- Hero -->
+    <section class="grid md:grid-cols-2 gap-8 items-center py-12">
+      <div class="reveal" id="hero-left">
+        <h2 class="text-4xl md:text-5xl font-extrabold leading-tight">Hi — I’m Edward.<span class="text-[color:var(--ed-indigo)]"> I build practical materials & prototypes.</span></h2>
+        <p class="mt-4 text-slate-600 max-w-xl">Hands-on materials R&amp;D, CAD-driven prototyping, and automated measurement tools. Comfortable across bench work (SEM, AFM, DSC), CAD, COMSOL simulation, and Python data pipelines.</p>
+
+        <div class="mt-6 flex gap-3 items-center">
+          <a href="#prototypes" class="inline-flex items-center px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md">See prototype</a>
+          <a href="mailto:e4hong@uwaterloo.ca" class="inline-flex items-center px-4 py-2 border border-slate-200 rounded-md">Email</a>
+        </div>
+
+        <div class="mt-6 text-sm text-slate-600">
+          <div>Phone: +1 905 962 9873</div>
+          <div class="mt-1">LinkedIn: <a href="https://www.linkedin.com/in/edward-hong-1062a4250/" class="underline text-[color:var(--ed-indigo)]" target="_blank" rel="noreferrer">Profile</a></div>
+        </div>
+      </div>
+
+      <div class="reveal" id="hero-right">
+        <div class="w-full h-64 md:h-56 rounded-2xl bg-gradient-to-tr from-indigo-50 to-indigo-100 flex items-center justify-center border border-slate-100">
+          <div class="text-center p-4">
+            <div class="text-slate-700 text-lg font-medium">Engineering Portfolio</div>
+            <div class="text-sm text-slate-500 mt-2">Download the full portfolio or resume below.</div>
+            <div class="mt-4 flex gap-2 justify-center">
+              <a class="px-3 py-2 border rounded-md text-sm" href="./assets/Edward_Hong_Resume_2025.pdf" download>Resume (PDF)</a>
+              <a class="px-3 py-2 border rounded-md text-sm" href="./assets/Edward_Hong_Portfolio_2025.pptx" download>Portfolio (PPTX)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Education (animated timeline) -->
+    <section id="education" class="mt-12">
+      <div class="mb-6">
+        <h3 class="text-2xl md:text-3xl font-semibold">Education</h3>
+        <p class="text-sm text-slate-600 mt-1">Academic highlights</p>
+      </div>
+
+      <div class="space-y-4">
+        <article class="relative pl-6 reveal">
+          <div class="absolute left-0 top-2 w-3 h-3 rounded-full bg-[color:var(--ed-indigo)] shadow"></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold">Honours Nanotechnology Engineering</div>
+                <div class="text-sm text-slate-600">University of Waterloo</div>
+              </div>
+              <div class="text-sm text-slate-500">09/2022 — Present</div>
+            </div>
+            <ul class="mt-3 text-sm text-slate-600 list-disc list-inside">
+              <li>Lab work: AFM, DSC, Raman, TGA, SEM</li>
+              <li>COMSOL simulations, circuit work, characterization methods</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Experience (animated cards) -->
+    <section id="experience" class="mt-16">
+      <div class="mb-6">
+        <h3 class="text-2xl md:text-3xl font-semibold">Experience</h3>
+        <p class="text-sm text-slate-600 mt-1">Roles & impact</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold">Material Science Specialist</div>
+              <div class="text-sm text-slate-600">H2nano</div>
+            </div>
+            <div class="text-sm text-slate-500">09/2024 – 04/2025</div>
+          </div>
+          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
+            <li>Led synthesis of hydrophilic coatings for photocatalysts</li>
+            <li>Designed & 3D-printed CAD fixtures for instrumentation (contact angle goniometer)</li>
+            <li>Ran characterization (UV-Vis, SEM, FTIR) and processed datasets</li>
+          </ul>
+        </article>
+
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold">Lab Assistant</div>
+              <div class="text-sm text-slate-600">SMART - Lab, University of Waterloo</div>
+            </div>
+            <div class="text-sm text-slate-500">01/2024 – 04/2024</div>
+          </div>
+          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
+            <li>Co-authored published research</li>
+            <li>Synthesized and characterized hydrogels & nanocomposites</li>
+            <li>Designed fixtures for 3D printing and shape-change gradients</li>
+          </ul>
+        </article>
+
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold">Concept Designer (Azure Engineering)</div>
+              <div class="text-sm text-slate-600">Avanade</div>
+            </div>
+            <div class="text-sm text-slate-500">06/2023 – 08/2023</div>
+          </div>
+          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
+            <li>Built prototype AI/ML solutions on Azure for fraud detection</li>
+            <li>Earned Azure certifications and implemented data pipelines</li>
+          </ul>
+        </article>
+
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold">Warehouse Associate</div>
+              <div class="text-sm text-slate-600">Amazon</div>
+            </div>
+            <div class="text-sm text-slate-500">06/2022 – 09/2022</div>
+          </div>
+          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
+            <li>Processed 150+ items/hour</li>
+            <li>Inventory & logistics at scale</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- Prototypes -->
+    <section id="prototypes" class="mt-16">
+      <div class="mb-6">
+        <h3 class="text-2xl md:text-3xl font-semibold">Prototype: Optical Contact Angle Goniometer</h3>
+        <p class="text-sm text-slate-600 mt-1">Hardware + automatic image processing</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
+          <div class="text-lg font-semibold">Contact Angle Goniometer</div>
+          <p class="text-sm text-slate-600 mt-2">
+            Designed and 3D-printed goniometer fixtures, captured droplet images, and wrote Python to automatically measure contact angles from images. Built with low-cost parts and campus resources to keep the rig reproducible and extensible.
+          </p>
+
+          <ul class="mt-3 text-sm text-slate-600 list-disc list-inside">
+            <li>Design: 3D-printed mounts & imaging fixtures</li>
+            <li>Method: Sessile drop imaging + Python analysis</li>
+            <li>Constraint: Low-cost, reproducible setup</li>
+          </ul>
+
+          <div class="mt-4 flex gap-3">
+            <button id="openPrototypeBtn" class="px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md">Open demo</button>
+            <a href="#contact" class="px-4 py-2 border rounded-md">Contact</a>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center reveal">
+          <!-- Animated droplet SVG (bobs up & down) -->
+          <svg width="220" height="180" viewBox="0 0 180 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g transform="translate(90,40)">
+              <!-- substrate baseline -->
+              <rect x="-85" y="40" width="170" height="6" fill="#e6e7ef" rx="3" />
+              <!-- droplet shadow -->
+              <ellipse cx="0" cy="47" rx="26" ry="6" fill="#000" opacity="0.06" />
+              <!-- droplet group that bobs -->
+              <g class="droplet-bob">
+                <path d="M -18 12 C -18 -18 18 -18 18 12 C 18 28 -18 28 -18 12 Z" fill="var(--ed-indigo)" opacity="0.95" />
+                <line x1="-5" y1="12" x2="-30" y2="40" stroke="#fff" stroke-width="1" opacity="0.5" stroke-dasharray="4 3" />
+                <line x1="5" y1="12" x2="30" y2="40" stroke="#fff" stroke-width="1" opacity="0.5" stroke-dasharray="4 3" />
+              </g>
+            </g>
+          </svg>
+
+          <div class="mt-4 text-sm text-slate-600 text-center">
+            Animated droplet — visual nod to the sessile-drop concept. Replace with an exported image from your portfolio PPTX for the real preview.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal (prototype preview) -->
+  <div id="modalRoot" class="fixed inset-0 hidden z-50 items-center justify-center">
+    <div class="modal-backdrop absolute inset-0"></div>
+    <div class="relative w-11/12 max-w-3xl bg-white rounded-2xl p-6 z-10">
+      <div class="flex items-start justify-between">
+        <div>
+          <h4 id="modalTitle" class="font-bold text-lg">Prototype</h4>
+          <p id="modalSub" class="text-sm text-slate-600">Preview</p>
+        </div>
+        <button id="closeModal" class="ml-4 text-slate-600">Close</button>
+      </div>
+
+      <div class="mt-4">
+        <div class="h-56 rounded-md bg-slate-50 flex items-center justify-center overflow-hidden">
+          <!-- Replace this image path with the slide or image you extracted from the PPTX -->
+          <img id="modalImg" src="./assets/goniometer-sample.png" alt="Goniometer preview" class="h-full object-contain" onerror="this.style.display='none'">
+          <p id="modalImgFallback" class="text-sm text-slate-400">(Preview image not found — copy a slide/image from the uploaded PPTX to <code>./assets/goniometer-sample.png</code>)</p>
+        </div>
+
+        <div class="mt-4 flex gap-3">
+          <a id="openImgBtn" class="px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md" href="./assets/goniometer-sample.png" target="_blank" rel="noreferrer">Open image</a>
+          <button id="modalBack" class="px-4 py-2 border rounded-md">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact / Footer -->
+  <footer id="contact" class="max-w-6xl mx-auto px-6 mt-12 pb-16">
+    <div class="mb-6">
+      <h3 class="text-2xl md:text-3xl font-semibold">Contact</h3>
+      <p class="text-sm text-slate-600 mt-1">Let’s build something together</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 max-w-2xl">
+      <p class="text-sm text-slate-700">Email: <a class="text-[color:var(--ed-indigo)]" href="mailto:e4hong@uwaterloo.ca">e4hong@uwaterloo.ca</a></p>
+      <p class="text-sm text-slate-700 mt-2">Phone: +1 905 962 9873</p>
+      <p class="text-sm text-slate-700 mt-2">LinkedIn: <a class="text-[color:var(--ed-indigo)]" href="https://www.linkedin.com/in/edward-hong-1062a4250/" target="_blank" rel="noreferrer">Profile</a></p>
+    </div>
+
+    <div class="mt-12 text-center text-sm text-slate-500">Built from your Resume &amp; PPTX — replace placeholder images with slide exports for full visual fidelity.</div>
+  </footer>
+
+  <!-- JS: reveal on scroll & modal handling -->
+  <script>
+    // Reveal on scroll (IntersectionObserver)
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('show');
+          io.unobserve(e.target); // reveal once
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealEls.forEach(el => io.observe(el));
+
+    // Modal open/close
+    const modalRoot = document.getElementById('modalRoot');
+    const openBtn = document.getElementById('openPrototypeBtn');
+    const closeBtn = document.getElementById('closeModal');
+    const backBtn = document.getElementById('modalBack');
+
+    function openModal() {
+      modalRoot.classList.remove('hidden');
+      modalRoot.classList.add('flex');
+      // hide fallback text if image exists
+      const img = document.getElementById('modalImg');
+      const fallback = document.getElementById('modalImgFallback');
+      if (img && img.complete && img.naturalWidth !== 0) {
+        fallback.style.display = 'none';
+      } else {
+        fallback.style.display = 'block';
+      }
+    }
+    function closeModal() {
+      modalRoot.classList.add('hidden');
+      modalRoot.classList.remove('flex');
+    }
+
+    openBtn && openBtn.addEventListener('click', openModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    backBtn && backBtn.addEventListener('click', closeModal);
+
+    // close modal on backdrop click
+    document.querySelectorAll('.modal-backdrop').forEach(b => {
+      b && b.addEventListener('click', closeModal);
+    });
+
+    // Graceful fallback for images (hide broken <img>)
+    document.querySelectorAll('img').forEach(img => {
+      img.addEventListener('error', () => {
+        img.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>
