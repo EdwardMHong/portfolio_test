@@ -5,208 +5,345 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Edward Hong — Portfolio</title>
 
-  <!-- Tailwind CDN for quick styling -->
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Custom colors & subtle utilities */
-    :root {
-      --ed-indigo: #4f46e5;
-      --muted: #6b7280;
+    :root{
+      --primary:#1e40af;
+      --muted:#6b7280;
+      --card:#ffffff;
+    }
+    html { scroll-behavior: smooth; }
+
+    body{
+      min-height:100vh;
+      margin:0;
+      color:#0f172a;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 400px at 10% 10%, rgba(37,99,235,0.06), transparent 10%),
+        radial-gradient(900px 300px at 90% 80%, rgba(99,102,241,0.03), transparent 12%),
+        linear-gradient(180deg,#ffffff 0%, #f8fafc 40%, #eef6ff 100%);
+      position:relative;
+      overflow-x:hidden;
     }
 
-    /* Moving background blobs */
-    .blob {
-      position: absolute;
-      filter: blur(28px);
-      opacity: .12;
-      border-radius: 28px;
-      transform-origin: center;
-    }
-    @keyframes floatA {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(-36px) translateX(8px) rotate(6deg); }
-      100% { transform: translateY(0) translateX(0) rotate(0deg); }
-    }
-    @keyframes floatB {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(48px) translateX(-12px) rotate(-6deg); }
-      100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    /* decorative texture */
+    body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(255,255,255,0.06), rgba(255,255,255,0) 20%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 24px),
+        linear-gradient(180deg, rgba(240,248,255,0.06), transparent 40%);
+      mix-blend-mode:soft-light;
+      opacity:0.9;
     }
 
-    .blob.a { animation: floatA 8s linear infinite; }
-    .blob.b { animation: floatB 10s linear infinite; }
-
-    /* Droplet bobbing (used for the contact-angle prototype) */
-    @keyframes bob {
-      0%   { transform: translateY(0); }
-      50%  { transform: translateY(-8px); }
-      100% { transform: translateY(0); }
+    /* faint diagonal overlay grid */
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(135deg, rgba(255,255,255,0.035) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.035) 50%, rgba(0,0,0,0) 50%),
+        linear-gradient(135deg, rgba(255,255,255,0.02) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.02) 50%, rgba(0,0,0,0) 50%);
+      background-size: 28px 28px, 56px 56px;
+      opacity: .6;
+      z-index:0;
     }
-    .droplet-bob { animation: bob 1.6s ease-in-out infinite; transform-origin: center; }
 
-    /* Reveal on scroll */
+    .blob{ position:absolute; border-radius:28px; filter: blur(32px); opacity:.12; transform-origin:center; z-index:0; pointer-events:none; }
+    @keyframes floatA { 0%{transform:translateY(0)}50%{transform:translateY(-36px) translateX(8px)}100%{transform:translateY(0)}}
+    @keyframes floatB { 0%{transform:translateY(0)}50%{transform:translateY(48px) translateX(-12px)}100%{transform:translateY(0)}}
+    .blob.a{ animation: floatA 9s linear infinite; } .blob.b{ animation: floatB 11s linear infinite; }
+
+    .content { position:relative; z-index:10; }
+
     .reveal { opacity: 0; transform: translateY(10px); transition: all .55s cubic-bezier(.22,.9,.35,1); }
     .reveal.show { opacity: 1; transform: translateY(0); }
 
-    /* Simple modal styles */
-    .modal-backdrop { background: rgba(0,0,0,0.5); }
+    .img-card { background: linear-gradient(180deg, rgba(37,99,235,0.06), rgba(37,99,235,0.02)); border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; border:1px solid rgba(30,64,175,0.04); }
+    .img-card img.thumb { width:100%; height:100%; display:block; object-fit:cover; }
+
+    .logo-square { width:160px; height:160px; flex:0 0 160px; display:flex; align-items:center; justify-content:center; background:white; border-radius:12px; border:1px solid rgba(14,165,233,0.06); overflow:hidden; }
+    .logo-square img { width:100%; height:100%; object-fit:contain; padding:10px; display:block; }
+
+    @media (max-width:640px){ .logo-square { width:120px; height:120px; flex:0 0 120px; } }
+
+    .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:90; }
+    .overlay.show { display:flex; }
+    .overlay-backdrop { position:absolute; inset:0; background:rgba(2,6,23,0.6); backdrop-filter: blur(4px); }
+    .zoom-panel { position:relative; width:min(94%,1000px); max-height:94vh; overflow:auto; border-radius:14px; background:var(--card); box-shadow: 0 20px 60px rgba(2,6,23,0.28); transform: translateY(10px) scale(.98); opacity:0; transition: transform .36s cubic-bezier(.2,.9,.3,1), opacity .26s ease; }
+    .zoom-panel.show { transform: translateY(0) scale(1); opacity:1; }
+    .zoom-img { width:100%; height:auto; max-height:78vh; object-fit:contain; display:block; border-radius:10px; background:linear-gradient(180deg,#eef2ff,#fff); }
+
+    .pill-nav a{ border: 1px solid rgba(30,64,175,0.08); padding: .5rem .9rem; border-radius:9999px; color:var(--primary); background:transparent; font-weight:600; display:inline-block; }
+    .pill-nav a:hover{ background:rgba(37,99,235,0.06); transform:translateY(-2px); transition:all .18s ease; }
+
+    .snapshot{ border-radius:12px; background: linear-gradient(180deg,#f8fbff,#eef6ff); min-height:180px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(30,64,175,0.06); overflow:hidden; }
+    /* PROFILE PORTRAIT: reduced by ~35% from previous size (now ~55%) */
+    .snapshot img { width:55%; height:55%; object-fit:cover; border-radius:10px; }
+
+    .experience-card { cursor:pointer; }
+    .experience-card:focus { outline: 3px solid rgba(37,99,235,0.12); }
+
+    .education-thumb { height:14rem; }
+
+    /* reduce gap between prototype and contact */
+    #prototypes { margin-bottom:0; }
+    footer#contact { margin-top:1rem; }
+
+    .detail-wrap { display:flex; gap:20px; align-items:flex-start; }
+    @media (max-width:900px){ .detail-wrap { flex-direction:column; } }
+    .detail-text { flex:1; color:#0f172a; }
+    .detail-text h3 { margin-top:0; margin-bottom:8px; }
+    .detail-text .meta { color:#475569; margin-bottom:12px; }
+    .detail-scroll { max-height:74vh; overflow:auto; padding-right:6px; }
+
+    /* header action download anchor */
+    #headerDownload { display:none; text-decoration:none; padding:.45rem .8rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:600; }
+    #headerDownload.secondary { background:#94a3b8; color:#fff; }
+
+    /*
+      --- USER REQUESTED TWEAKS ---
+      Slightly increase content font-size (~1px) and reduce large empty space in overlays:
+    */
+
+    /* bump readable font a touch for content & detail overlays (approx +1px) */
+    .detail-text,
+    .detail-text ul li,
+    .text-sm,
+    .img-card .thumb,
+    .pill-nav a {
+      font-size: 15px !important; /* ~1px up from typical 14px text-sm */
+      line-height: 1.45;
+    }
+
+    /* tighten the zoom panel: narrower and less padding to reduce empty margins */
+    .zoom-panel { width: min(94%, 1000px); } /* slightly narrower */
+    .zoom-panel > div { padding: 12px !important; } /* reduce from p-4 / p-6 */
+
+    /* make zoom content area slightly smaller vertically so there's less empty space */
+    #zoomContent { padding: 12px !important; min-height: 48vh !important; }
+
+    /* limit detail text width to avoid wide empty whitespace and long lines */
+    .detail-text { max-width: 720px; }
+
+    /* reduce spacing between detail list items */
+    .detail-text ul { margin-top: 8px; padding-left: 18px; }
+    .detail-text ul li { margin-bottom: 6px; }
+
+    /* small safeguard for very small screens */
+    @media (max-width:420px){
+      .detail-text, .text-sm { font-size:14.5px !important; }
+      .zoom-panel { width: 96% !important; }
+      #zoomContent { min-height: 42vh !important; }
+    }
   </style>
 </head>
-<body class="antialiased bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
+<body>
+  <!-- decorative blobs -->
+  <div aria-hidden="true">
+    <div class="blob a" style="left:-6%; top:-8%; width:680px; height:420px; background: linear-gradient(135deg, rgba(37,99,235,0.28), rgba(99,102,241,0.12));"></div>
+    <div class="blob b" style="right:3%; top:8%; width:520px; height:360px; background: linear-gradient(135deg, rgba(96,165,250,0.24), rgba(99,102,241,0.06));"></div>
+  </div>
 
-  <!-- Header with animated blobs (inspired by your PPTX visual language) -->
-  <header class="relative overflow-hidden pb-8">
-    <div class="max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
+  <!-- Header -->
+  <header class="relative overflow-hidden">
+    <div class="content max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold">Edward Hong</h1>
-        <p class="text-sm text-slate-600">Nanotechnology Engineer — prototyping &amp; materials R&amp;D</p>
+        <p class="text-sm text-slate-600">Nanotechnology Engineer — prototyping & materials R&D</p>
       </div>
-      <nav class="hidden md:flex gap-4 text-sm items-center">
+      <nav class="hidden md:flex gap-6 text-sm items-center">
         <a href="#education" class="hover:underline">Education</a>
         <a href="#experience" class="hover:underline">Experience</a>
         <a href="#prototypes" class="hover:underline">Prototypes</a>
-        <a href="#contact" class="px-3 py-1 rounded-md bg-[color:var(--ed-indigo)] text-white">Contact</a>
+        <a href="#contact" class="px-3 py-1 rounded-md bg-[color:var(--primary)] text-white">Contact</a>
       </nav>
-    </div>
-
-    <!-- moving translucent blobs -->
-    <div aria-hidden="true">
-      <div class="blob a -left-16 -top-6 w-80 h-64 bg-gradient-to-tr from-[color:var(--ed-indigo)] to-indigo-200"></div>
-      <div class="blob b right-6 top-12 w-64 h-48 bg-gradient-to-tr from-indigo-100 to-white"></div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 pb-20">
-    <!-- Hero -->
-    <section class="grid md:grid-cols-2 gap-8 items-center py-12">
+  <main class="content max-w-6xl mx-auto px-6 pb-20">
+    <!-- HERO -->
+    <section class="grid md:grid-cols-2 gap-8 items-start py-8">
       <div class="reveal" id="hero-left">
-        <h2 class="text-4xl md:text-5xl font-extrabold leading-tight">Hi — I’m Edward.<span class="text-[color:var(--ed-indigo)]"> I build practical materials & prototypes.</span></h2>
-        <p class="mt-4 text-slate-600 max-w-xl">Hands-on materials R&amp;D, CAD-driven prototyping, and automated measurement tools. Comfortable across bench work (SEM, AFM, DSC), CAD, COMSOL simulation, and Python data pipelines.</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold leading-tight">Hello,<span class="text-[color:var(--primary)]"> I’m Edward.</span></h2>
+        <p class="mt-4 text-slate-600 max-w-xl">Hands-on materials R&amp;D, CAD prototyping, COMSOL and Python data pipelines. Comfortable across bench work (SEM, AFM, DSC), CAD, simulation, and Python automation.</p>
 
         <div class="mt-6 flex gap-3 items-center">
-          <a href="#prototypes" class="inline-flex items-center px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md">See prototype</a>
+          <a href="#prototypes" class="inline-flex items-center px-4 py-2 bg-[color:var(--primary)] text-white rounded-md">See prototype</a>
           <a href="mailto:e4hong@uwaterloo.ca" class="inline-flex items-center px-4 py-2 border border-slate-200 rounded-md">Email</a>
         </div>
 
-        <div class="mt-6 text-sm text-slate-600">
-          <div>Phone: +1 905 962 9873</div>
-          <div class="mt-1">LinkedIn: <a href="https://www.linkedin.com/in/edward-hong-1062a4250/" class="underline text-[color:var(--ed-indigo)]" target="_blank" rel="noreferrer">Profile</a></div>
+        <div class="mt-4">
+          <div class="pill-nav flex gap-3 items-center">
+            <a href="#education">Education</a>
+            <a href="#experience">Work Experience</a>
+            <a href="#prototypes">Prototype</a>
+          </div>
         </div>
       </div>
 
       <div class="reveal" id="hero-right">
-        <div class="w-full h-64 md:h-56 rounded-2xl bg-gradient-to-tr from-indigo-50 to-indigo-100 flex items-center justify-center border border-slate-100">
-          <div class="text-center p-4">
-            <div class="text-slate-700 text-lg font-medium">Engineering Portfolio</div>
-            <div class="text-sm text-slate-500 mt-2">Download the full portfolio or resume below.</div>
-            <div class="mt-4 flex gap-2 justify-center">
-              <a class="px-3 py-2 border rounded-md text-sm" href="./assets/Edward_Hong_Resume_2025.pdf" download>Resume (PDF)</a>
-              <a class="px-3 py-2 border rounded-md text-sm" href="./assets/Edward_Hong_Portfolio_2025.pptx" download>Portfolio (PPTX)</a>
-            </div>
-          </div>
+        <div class="snapshot flex-col p-0 items-center">
+          <img alt="Portrait" src="./sunset%20pic.jpg" />
+        </div>
+
+        <div class="mt-4 flex gap-3 justify-start">
+          <a id="resumeLink" class="px-3 py-2 border rounded-md text-sm" href="./Edward%20Hong%20Resume%20-%202025.pdf" download>Resume (PDF)</a>
+          <a id="portfolioLink" class="px-3 py-2 border rounded-md text-sm" href="./Edward%20Hong%20Portfolio%20-%202025.pdf" download>Portfolio (PDF)</a>
         </div>
       </div>
     </section>
 
-    <!-- Education (animated timeline) -->
-    <section id="education" class="mt-12">
-      <div class="mb-6">
+    <!-- EDUCATION (now clickable; compact summary on the card but expanded overlay shows text-only details) -->
+    <section id="education" class="mt-10 bg-[linear-gradient(180deg,#ffffff,rgba(240,249,255,0.6))] rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
+      <div class="mb-4">
         <h3 class="text-2xl md:text-3xl font-semibold">Education</h3>
         <p class="text-sm text-slate-600 mt-1">Academic highlights</p>
       </div>
 
       <div class="space-y-4">
-        <article class="relative pl-6 reveal">
-          <div class="absolute left-0 top-2 w-3 h-3 rounded-full bg-[color:var(--ed-indigo)] shadow"></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-semibold">Honours Nanotechnology Engineering</div>
-                <div class="text-sm text-slate-600">University of Waterloo</div>
-              </div>
-              <div class="text-sm text-slate-500">09/2022 — Present</div>
+        <article class="relative pl-6 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 experience-card" data-full-id="education-full" tabindex="0" role="button" aria-label="Open education details">
+          <div class="absolute left-0 top-6 w-3 h-3 rounded-full bg-[color:var(--primary)] shadow"></div>
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-semibold">Honours Nanotechnology Engineering</div>
+              <div class="text-sm text-slate-600">University of Waterloo</div>
             </div>
-            <ul class="mt-3 text-sm text-slate-600 list-disc list-inside">
-              <li>Lab work: AFM, DSC, Raman, TGA, SEM</li>
-              <li>COMSOL simulations, circuit work, characterization methods</li>
-            </ul>
+            <div class="text-sm text-slate-500">09/2022 — Present • Waterloo, ON</div>
+          </div>
+
+          <div class="mt-3 text-sm text-slate-600 space-y-2">
+            <div>• Lab work: AFM, DSC, Raman, TGA, SEM</div>
+            <div>• COMSOL simulations, circuits & characterization</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <!-- SEM Image -->
+            <div class="img-card education-thumb img-placeholder" data-title="SEM — topography" role="button" tabindex="0" data-full-src="./SEM.jpg" aria-label="Open SEM preview">
+              <img class="thumb w-full h-auto" alt="SEM" src="./SEM.jpg" loading="lazy">
+            </div>
+          
+            <!-- SAED GIF Preview (clickable, expands to play gif) -->
+            <div class="img-card education-thumb img-placeholder img-gif-poster" data-title="SAED (real-time)" data-gif="./SAED%20gif.gif" role="button" tabindex="0" aria-label="Open SAED gif preview">
+              <img class="thumb w-full h-auto" alt="SAED" src="./SAED%20gif.gif" loading="lazy">
+            </div>
           </div>
         </article>
       </div>
     </section>
 
-    <!-- Experience (animated cards) -->
-    <section id="experience" class="mt-16">
-      <div class="mb-6">
-        <h3 class="text-2xl md:text-3xl font-semibold">Experience</h3>
+    <!-- EXPERIENCE -->
+    <section id="experience" class="mt-10">
+      <div class="mb-6 reveal">
+        <h3 class="text-2xl md:text-3xl font-semibold">Work Experience</h3>
         <p class="text-sm text-slate-600 mt-1">Roles & impact</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+        <!-- H2nano -->
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="h2nano" tabindex="0" role="button" aria-label="Open H2nano details">
           <div class="flex items-start justify-between">
             <div>
               <div class="font-semibold">Material Science Specialist</div>
               <div class="text-sm text-slate-600">H2nano</div>
             </div>
-            <div class="text-sm text-slate-500">09/2024 – 04/2025</div>
+            <div class="text-sm text-slate-500">09/2024 – 04/2025 • Kitchener, ON</div>
           </div>
-          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
-            <li>Led synthesis of hydrophilic coatings for photocatalysts</li>
-            <li>Designed & 3D-printed CAD fixtures for instrumentation (contact angle goniometer)</li>
-            <li>Ran characterization (UV-Vis, SEM, FTIR) and processed datasets</li>
-          </ul>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 items-start">
+            <div class="logo-square">
+              <img alt="H2nano" src="./h2nano%20logo.png" loading="lazy">
+            </div>
+
+            <div class="text-sm text-slate-600 space-y-2">
+              <div>• Led synthesis of hydrophilic coatings for photocatalysts</div>
+              <div>• Designed & 3D-printed CAD fixtures (goniometer)</div>
+              <div>• Characterized materials (UV-Vis, SEM, FTIR)</div>
+            </div>
+          </div>
         </article>
 
-        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+        <!-- SMART Lab -->
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="smartlab" tabindex="0" role="button" aria-label="Open SMART Lab details">
           <div class="flex items-start justify-between">
             <div>
               <div class="font-semibold">Lab Assistant</div>
               <div class="text-sm text-slate-600">SMART - Lab, University of Waterloo</div>
             </div>
-            <div class="text-sm text-slate-500">01/2024 – 04/2024</div>
+            <div class="text-sm text-slate-500">01/2024 – 04/2024 • Waterloo, ON</div>
           </div>
-          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
-            <li>Co-authored published research</li>
-            <li>Synthesized and characterized hydrogels & nanocomposites</li>
-            <li>Designed fixtures for 3D printing and shape-change gradients</li>
-          </ul>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 items-start">
+            <div class="logo-square">
+              <img alt="UW logo" src="./UW%20logo.png" loading="lazy">
+            </div>
+
+            <div class="text-sm text-slate-600 space-y-2">
+              <div>• Co-authored published research</div>
+              <div>• Synthesized and characterized hydrogels & nanocomposites</div>
+              <div>• Designed 3D-printed fixtures for experiments</div>
+            </div>
+          </div>
         </article>
 
-        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+        <!-- Avanade -->
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="avanade" tabindex="0" role="button" aria-label="Open Avanade details">
           <div class="flex items-start justify-between">
             <div>
               <div class="font-semibold">Concept Designer (Azure Engineering)</div>
               <div class="text-sm text-slate-600">Avanade</div>
             </div>
-            <div class="text-sm text-slate-500">06/2023 – 08/2023</div>
+            <div class="text-sm text-slate-500">06/2023 – 08/2023 • Hamilton, ON (Remote)</div>
           </div>
-          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
-            <li>Built prototype AI/ML solutions on Azure for fraud detection</li>
-            <li>Earned Azure certifications and implemented data pipelines</li>
-          </ul>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 items-start">
+            <div class="logo-square">
+              <img alt="Avanade" src="./avanade%20logo.png" loading="lazy">
+            </div>
+
+            <div class="text-sm text-slate-600 space-y-2">
+              <div>• Built prototype AI/ML solutions on Azure</div>
+              <div>• Implemented data pipelines & earned Azure certifications</div>
+            </div>
+          </div>
         </article>
 
-        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:scale-[1.02] transition-transform reveal">
+        <!-- Amazon -->
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="amazon" tabindex="0" role="button" aria-label="Open Amazon details">
           <div class="flex items-start justify-between">
             <div>
               <div class="font-semibold">Warehouse Associate</div>
               <div class="text-sm text-slate-600">Amazon</div>
             </div>
-            <div class="text-sm text-slate-500">06/2022 – 09/2022</div>
+            <div class="text-sm text-slate-500">06/2022 – 09/2022 • Hamilton, ON</div>
           </div>
-          <ul class="mt-3 list-disc list-inside text-sm text-slate-600">
-            <li>Processed 150+ items/hour</li>
-            <li>Inventory & logistics at scale</li>
-          </ul>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 items-start">
+            <div class="logo-square">
+              <img alt="Amazon" src="./amazon%20logo.png" loading="lazy">
+            </div>
+
+            <div class="text-sm text-slate-600 space-y-2">
+              <div>• Processed and organized inventory at scale</div>
+              <div>• Maintained throughput of 150+ items/hour</div>
+            </div>
+          </div>
         </article>
       </div>
     </section>
 
-    <!-- Prototypes -->
-    <section id="prototypes" class="mt-16">
-      <div class="mb-6">
+    <!-- PROTOTYPE -->
+    <section id="prototypes" class="mt-12">
+      <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Prototype: Optical Contact Angle Goniometer</h3>
         <p class="text-sm text-slate-600 mt-1">Hardware + automatic image processing</p>
       </div>
@@ -214,143 +351,458 @@
       <div class="grid md:grid-cols-2 gap-6 items-center">
         <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
           <div class="text-lg font-semibold">Contact Angle Goniometer</div>
-          <p class="text-sm text-slate-600 mt-2">
-            Designed and 3D-printed goniometer fixtures, captured droplet images, and wrote Python to automatically measure contact angles from images. Built with low-cost parts and campus resources to keep the rig reproducible and extensible.
-          </p>
+          <p class="text-sm text-slate-600 mt-2">3D-printed mounts, low-cost imaging rig, and Python automation for sessile-drop contact angle measurement.</p>
 
           <ul class="mt-3 text-sm text-slate-600 list-disc list-inside">
-            <li>Design: 3D-printed mounts & imaging fixtures</li>
-            <li>Method: Sessile drop imaging + Python analysis</li>
-            <li>Constraint: Low-cost, reproducible setup</li>
+            <li>Design: 3D-printed mounts & fixtures</li>
+            <li>Method: Sessile drop imaging + Python processing</li>
+            <li>Constraint: Reproducible and low-cost</li>
           </ul>
-
-          <div class="mt-4 flex gap-3">
-            <button id="openPrototypeBtn" class="px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md">Open demo</button>
-            <a href="#contact" class="px-4 py-2 border rounded-md">Contact</a>
-          </div>
         </div>
 
         <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center reveal">
-          <!-- Animated droplet SVG (bobs up & down) -->
-          <svg width="220" height="180" viewBox="0 0 180 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <g transform="translate(90,40)">
-              <!-- substrate baseline -->
-              <rect x="-85" y="40" width="170" height="6" fill="#e6e7ef" rx="3" />
-              <!-- droplet shadow -->
-              <ellipse cx="0" cy="47" rx="26" ry="6" fill="#000" opacity="0.06" />
-              <!-- droplet group that bobs -->
-              <g class="droplet-bob">
-                <path d="M -18 12 C -18 -18 18 -18 18 12 C 18 28 -18 28 -18 12 Z" fill="var(--ed-indigo)" opacity="0.95" />
-                <line x1="-5" y1="12" x2="-30" y2="40" stroke="#fff" stroke-width="1" opacity="0.5" stroke-dasharray="4 3" />
-                <line x1="5" y1="12" x2="30" y2="40" stroke="#fff" stroke-width="1" opacity="0.5" stroke-dasharray="4 3" />
-              </g>
-            </g>
-          </svg>
+          <div class="img-card h-56 w-full img-placeholder img-gallery" data-title="Contact Angle — gallery" data-images='[{"src":"./ca.png","title":"Post-automated processing"},{"src":"./Virgin%20HDPE%2C%201%20uL%20-%20Show%20off.jpg","title":"Raw image from goniometer"}]' role="button" tabindex="0" aria-label="Open prototype gallery">
+            <img class="thumb" alt="Contact angle thumbnail" src="./ca.png" loading="lazy">
+          </div>
 
           <div class="mt-4 text-sm text-slate-600 text-center">
-            Animated droplet — visual nod to the sessile-drop concept. Replace with an exported image from your portfolio PPTX for the real preview.
+            Click the image to zoom in for a closer look.
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Modal (prototype preview) -->
-  <div id="modalRoot" class="fixed inset-0 hidden z-50 items-center justify-center">
-    <div class="modal-backdrop absolute inset-0"></div>
-    <div class="relative w-11/12 max-w-3xl bg-white rounded-2xl p-6 z-10">
-      <div class="flex items-start justify-between">
-        <div>
-          <h4 id="modalTitle" class="font-bold text-lg">Prototype</h4>
-          <p id="modalSub" class="text-sm text-slate-600">Preview</p>
-        </div>
-        <button id="closeModal" class="ml-4 text-slate-600">Close</button>
-      </div>
+  <!-- overlay -->
+  <div id="overlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="overlay-backdrop" id="overlayBackdrop"></div>
 
-      <div class="mt-4">
-        <div class="h-56 rounded-md bg-slate-50 flex items-center justify-center overflow-hidden">
-          <!-- Replace this image path with the slide or image you extracted from the PPTX -->
-          <img id="modalImg" src="./assets/goniometer-sample.png" alt="Goniometer preview" class="h-full object-contain" onerror="this.style.display='none'">
-          <p id="modalImgFallback" class="text-sm text-slate-400">(Preview image not found — copy a slide/image from the uploaded PPTX to <code>./assets/goniometer-sample.png</code>)</p>
+    <div class="zoom-panel" id="zoomPanel" role="document" aria-labelledby="zoomTitle">
+      <div class="p-4 md:p-6">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h4 id="zoomTitle" class="font-bold text-lg">Preview</h4>
+            <p id="zoomSub" class="text-sm text-slate-600">Click outside or press Esc to close</p>
+          </div>
+
+          <div class="ml-auto flex items-center gap-3">
+            <button id="prevImgBtn" class="text-slate-600" aria-label="Previous" style="font-size:20px;display:inline-block">&lt;</button>
+            <button id="nextImgBtn" class="text-slate-600" aria-label="Next" style="font-size:20px;display:inline-block">&gt;</button>
+            <!-- header download button for file previews -->
+            <a id="headerDownload" href="#" class="" target="_blank" rel="noreferrer">Download</a>
+            <button id="zoomClose" class="ml-2 text-slate-600" aria-label="Close preview">Close</button>
+          </div>
         </div>
 
-        <div class="mt-4 flex gap-3">
-          <a id="openImgBtn" class="px-4 py-2 bg-[color:var(--ed-indigo)] text-white rounded-md" href="./assets/goniometer-sample.png" target="_blank" rel="noreferrer">Open image</a>
-          <button id="modalBack" class="px-4 py-2 border rounded-md">Back</button>
+        <div class="mt-4">
+          <div id="zoomContent" class="rounded-md bg-slate-50 flex items-center justify-center p-4" style="min-height:60vh;">
+            <!-- dynamic content -->
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Contact / Footer -->
-  <footer id="contact" class="max-w-6xl mx-auto px-6 mt-12 pb-16">
-    <div class="mb-6">
+  <!-- CONTACT -->
+  <footer id="contact" class="content max-w-6xl mx-auto px-6 mt-6 pb-10">
+    <div class="mb-6 reveal">
       <h3 class="text-2xl md:text-3xl font-semibold">Contact</h3>
       <p class="text-sm text-slate-600 mt-1">Let’s build something together</p>
     </div>
 
-    <div class="bg-white rounded-2xl p-6 border border-slate-100 max-w-2xl">
-      <p class="text-sm text-slate-700">Email: <a class="text-[color:var(--ed-indigo)]" href="mailto:e4hong@uwaterloo.ca">e4hong@uwaterloo.ca</a></p>
-      <p class="text-sm text-slate-700 mt-2">Phone: +1 905 962 9873</p>
-      <p class="text-sm text-slate-700 mt-2">LinkedIn: <a class="text-[color:var(--ed-indigo)]" href="https://www.linkedin.com/in/edward-hong-1062a4250/" target="_blank" rel="noreferrer">Profile</a></p>
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 max-w-2xl reveal">
+      <p class="text-sm text-slate-700">Email: <a class="text-[color:var(--primary)]" href="mailto:e4hong@uwaterloo.ca">e4hong@uwaterloo.ca</a></p>
+      <p class="text-sm text-slate-700 mt-2">LinkedIn: <a class="text-[color:var(--primary)]" href="https://www.linkedin.com/in/edward-hong-1062a4250/" target="_blank" rel="noreferrer">Profile</a></p>
     </div>
 
-    <div class="mt-12 text-center text-sm text-slate-500">Built from your Resume &amp; PPTX — replace placeholder images with slide exports for full visual fidelity.</div>
+    <div class="mt-8 text-center text-sm text-slate-500 reveal">Built from your Resume & PPTX — images are loaded from repository files.</div>
   </footer>
 
-  <!-- JS: reveal on scroll & modal handling -->
   <script>
-    // Reveal on scroll (IntersectionObserver)
-    const revealEls = document.querySelectorAll('.reveal');
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('show');
-          io.unobserve(e.target); // reveal once
+    // reveal observer
+    (function(){
+      var els = document.querySelectorAll('.reveal');
+      var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('show'); obs.unobserve(e.target); }});
+      }, { threshold: 0.12 });
+      els.forEach(function(el){ obs.observe(el); });
+    })();
+
+    // overlay controls
+    var overlay = document.getElementById('overlay');
+    var zoomPanel = document.getElementById('zoomPanel');
+    var zoomContent = document.getElementById('zoomContent');
+    var zoomTitle = document.getElementById('zoomTitle');
+    var zoomSub = document.getElementById('zoomSub');
+    var zoomClose = document.getElementById('zoomClose');
+    var overlayBackdrop = document.getElementById('overlayBackdrop');
+    var prevBtn = document.getElementById('prevImgBtn');
+    var nextBtn = document.getElementById('nextImgBtn');
+    var headerDownload = document.getElementById('headerDownload');
+
+    var gallery = [];
+    var galleryIndex = 0;
+
+    // details for overlays (education & experience)
+    var detailsMap = {
+      "h2nano": {
+        "title": "Material Science Specialist",
+        "subtitle": "H2nano",
+        "date": "09/2024 – 04/2025 • Kitchener, ON",
+        "items": [
+          "Lead a project on synthesizing hydrophilic coatings on photocatalysts",
+          "Compiled and analyzed data, reviews and project plans for weekly meetings",
+          "Designed and printed 3D CAD models for instrumentation (contact angle goniometer)",
+          "Conducted multiple material characterizations through numerous methods (UV-Vis, SEM, FTIR, COD) for semiconductors and nanoparticles",
+          "Processed weather data through collaborative Python projects"
+        ]
+      },
+      "smartlab": {
+        "title": "Lab Assistant",
+        "subtitle": "SMART - Lab, University of Waterloo",
+        "date": "01/2024 – 04/2024 • Waterloo, ON",
+        "items": [
+          "Co-authored published research papers",
+          "Participated in projects creating hydrogels for soft body robotics",
+          "Synthesized and characterized hydrogels with nanocomposites (Crystal Nanocellulose, Iron Oxide nanoparticles)",
+          "Designed and printed 3D CAD models for extrusion & DLP 3D printing",
+          "Shape-change programming of hydrogels via chemistry gradients",
+          "Debriefed projects in conference meetings to ensure intercommunication",
+          "Took stock of chemicals and created product comparison charts"
+        ]
+      },
+      "avanade": {
+        "title": "Concept Designer (Azure Engineering)",
+        "subtitle": "Avanade",
+        "date": "06/2023 – 08/2023 • Hamilton, ON (Remote)",
+        "items": [
+          "Created prototype AI solutions using Azure services to help prevent financial frauds against older adults",
+          "Learned and assessed AZ-900 and AI-900 through exams",
+          "Gained deep understanding of Azure Cloud Services, Machine Learning, and AI"
+        ]
+      },
+      "amazon": {
+        "title": "Warehouse Associate",
+        "subtitle": "Amazon",
+        "date": "06/2022 – 09/2022 • Hamilton, ON",
+        "items": [
+          "Collaborated to store, organize and deliver items to residents and other warehouses",
+          "Practiced time management and spatial cognition to stock 150+ items/hour"
+        ]
+      },
+      "education-full": {
+        "title": "Honours Nanotechnology Engineering",
+        "subtitle": "University of Waterloo",
+        "date": "09/2022 – Present • Waterloo, ON",
+        "items": [
+          "Wrote technical lab reports on effects of nanofillers on nanocomposites' mechanical and thermal properties",
+          "Conducted impact and tensile tests, Differential Scanning Calorimetry (DSC), Thermogravimetric Analysis (TGA), and Atomic Force Microscopy (AFM); isolated target products from solutions",
+          "Synthesized nano silver particles to determine effectiveness against elimination of micro-organisms",
+          "Knowledge of circuits and electromagnetism concepts; COMSOL simulation; oscilloscope, soldering, circuit building",
+          "Characterized materials through variety of instrumental methods including SEM",
+          "Synthesized silicon wafers through PVD and Lithography to perform Ellipsometry; acquainted with MOSFETs and fundamentals of nanoelectronics; hands-on photonics labs"
+        ]
+      }
+    };
+
+    // open overlay
+    function openOverlay(title, content, opts) {
+      opts = opts || {};
+      zoomTitle.textContent = title || 'Preview';
+      zoomSub.textContent = 'Click outside or press Esc to close';
+      zoomContent.innerHTML = '';
+      gallery = [];
+      galleryIndex = 0;
+
+      // hide headerDownload by default
+      headerDownload.style.display = 'none';
+      headerDownload.href = '#';
+      headerDownload.removeAttribute('download');
+
+      if (Array.isArray(content)) {
+        gallery = content.slice();
+        renderGalleryImage(0);
+      } else if (typeof content === 'string') {
+        if (opts.filePreview) {
+          // file preview: show iframe and header download
+          renderFilePreview(content, opts);
+        } else {
+          renderSingle(content);
         }
-      });
-    }, { threshold: 0.12 });
-
-    revealEls.forEach(el => io.observe(el));
-
-    // Modal open/close
-    const modalRoot = document.getElementById('modalRoot');
-    const openBtn = document.getElementById('openPrototypeBtn');
-    const closeBtn = document.getElementById('closeModal');
-    const backBtn = document.getElementById('modalBack');
-
-    function openModal() {
-      modalRoot.classList.remove('hidden');
-      modalRoot.classList.add('flex');
-      // hide fallback text if image exists
-      const img = document.getElementById('modalImg');
-      const fallback = document.getElementById('modalImgFallback');
-      if (img && img.complete && img.naturalWidth !== 0) {
-        fallback.style.display = 'none';
+      } else if (content instanceof Node) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        zoomContent.appendChild(content);
       } else {
-        fallback.style.display = 'block';
+        zoomContent.innerHTML = '<div style="padding:24px">No preview available</div>';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+
+      overlay.classList.add('show');
+      setTimeout(function(){ zoomPanel.classList.add('show'); }, 10);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderSingle(url) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      zoomContent.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.className = 'zoom-img';
+      img.alt = zoomTitle.textContent || 'Preview';
+      zoomContent.appendChild(img);
+    }
+
+    function renderGalleryImage(index) {
+      if (!gallery || gallery.length === 0) return;
+      prevBtn.style.display = gallery.length > 1 ? 'inline-block' : 'none';
+      nextBtn.style.display = gallery.length > 1 ? 'inline-block' : 'none';
+
+      var item = gallery[index];
+      var url = (item && item.src) ? item.src : item;
+      var title = (item && item.title) ? item.title : zoomTitle.textContent || '';
+      zoomTitle.textContent = title;
+
+      zoomContent.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.className = 'zoom-img';
+      img.alt = title;
+      zoomContent.appendChild(img);
+    }
+
+    // render file preview (iframe) and set header download
+    function renderFilePreview(fileUrl, opts) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      zoomContent.innerHTML = '';
+
+      // larger embed area
+      var wrapper = document.createElement('div');
+      wrapper.style.width = '100%';
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.gap = '12px';
+
+      var embed = document.createElement('iframe');
+      embed.src = fileUrl;
+      embed.style.width = '100%';
+      embed.style.height = '78vh'; // expanded preview area
+      embed.style.border = '0';
+      wrapper.appendChild(embed);
+
+      zoomContent.appendChild(wrapper);
+
+      // configure header download button
+      headerDownload.href = fileUrl;
+      if (opts.fileName) headerDownload.setAttribute('download', opts.fileName);
+      headerDownload.style.display = 'inline-block';
+    }
+
+    function closeOverlay() {
+      zoomPanel.classList.remove('show');
+      setTimeout(function(){
+        overlay.classList.remove('show');
+        zoomContent.innerHTML = '';
+        gallery = [];
+        galleryIndex = 0;
+        document.body.style.overflow = '';
+        prevBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        headerDownload.style.display = 'none';
+      }, 260);
+    }
+
+    // event listeners
+    zoomClose.addEventListener('click', closeOverlay);
+    overlayBackdrop.addEventListener('click', closeOverlay);
+    window.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeOverlay();
+      if (e.key === 'ArrowLeft' && gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }
+      if (e.key === 'ArrowRight' && gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }
+    });
+    prevBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }});
+    nextBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }});
+
+    // make poster from GIF first frame (best-effort)
+    async function makeGifPoster(gifUrl) {
+      try {
+        var resp = await fetch(gifUrl);
+        var blob = await resp.blob();
+        var bitmap = await createImageBitmap(blob);
+        var canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        return canvas.toDataURL('image/png');
+      } catch (err) {
+        console.warn('makeGifPoster failed', err);
+        return gifUrl;
       }
     }
-    function closeModal() {
-      modalRoot.classList.add('hidden');
-      modalRoot.classList.remove('flex');
-    }
 
-    openBtn && openBtn.addEventListener('click', openModal);
-    closeBtn && closeBtn.addEventListener('click', closeModal);
-    backBtn && backBtn.addEventListener('click', closeModal);
+    // DOM ready
+    document.addEventListener('DOMContentLoaded', function(){
+      // set GIF posters
+      var gifEls = document.querySelectorAll('.img-gif-poster');
+      gifEls.forEach(function(el){
+        var gif = el.dataset.gif;
+        var img = el.querySelector('img');
+        if (gif && img) {
+          makeGifPoster(gif).then(function(poster){
+            if (poster) img.src = poster;
+          }).catch(function(){ /* fallback: gif remains */ });
+        }
+      });
 
-    // close modal on backdrop click
-    document.querySelectorAll('.modal-backdrop').forEach(b => {
-      b && b.addEventListener('click', closeModal);
-    });
-
-    // Graceful fallback for images (hide broken <img>)
-    document.querySelectorAll('img').forEach(img => {
-      img.addEventListener('error', () => {
-        img.style.display = 'none';
+      // initial reveal
+      document.querySelectorAll('.reveal').forEach(function(el){
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) el.classList.add('show');
       });
     });
+
+    // thumbnail / gallery clicks (logos are not .img-placeholder)
+    document.querySelectorAll('.img-placeholder').forEach(function(el){
+      el.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if (el.classList.contains('img-gallery') && el.dataset.images) {
+          try {
+            var items = JSON.parse(el.dataset.images);
+            var prepared = items.map(function(it){ return (typeof it === 'string') ? { src: it, title: '' } : { src: it.src, title: it.title || '' }; });
+            openOverlay(el.dataset.title || 'Preview', prepared);
+            return;
+          } catch (err) { /* fallback below */ }
+        }
+        if (el.classList.contains('img-gif-poster') && el.dataset.gif) {
+          openOverlay(el.dataset.title || 'Preview', el.dataset.gif);
+          return;
+        }
+        var img = el.querySelector('img');
+        if (img) {
+          openOverlay(el.dataset.title || 'Preview', img.src);
+          return;
+        }
+        var svg = el.querySelector('svg');
+        if (svg) {
+          var clone = svg.cloneNode(true);
+          clone.setAttribute('width','100%'); clone.setAttribute('height','auto');
+          var wrap = document.createElement('div');
+          wrap.style.width='100%'; wrap.style.display='flex'; wrap.style.justifyContent='center';
+          wrap.appendChild(clone);
+          openOverlay(el.dataset.title || 'Preview', wrap);
+          return;
+        }
+        openOverlay(el.dataset.title || 'Preview', '<div style="padding:24px">No preview available</div>');
+      });
+      el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
+    });
+
+    // build detail overlay (logo optional)
+    function buildDetailOverlay(detailKey, logoSrc, showLogo) {
+      var info = detailsMap[detailKey];
+      if (!info) return null;
+      var wrapper = document.createElement('div');
+      wrapper.className = 'detail-wrap';
+
+      // left: logo (only for work experience; education passes showLogo=false)
+      if (showLogo) {
+        var left = document.createElement('div');
+        left.style.flex = '0 0 auto';
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        left.style.justifyContent = 'center';
+        left.style.marginRight = '16px';
+        var logoBox = document.createElement('div');
+        logoBox.className = 'logo-square';
+        if (logoSrc) {
+          var img = document.createElement('img');
+          img.src = logoSrc;
+          img.alt = 'Logo';
+          logoBox.appendChild(img);
+        } else {
+          logoBox.innerHTML = '<div style="width:60%;height:60%;background:#eef2ff;border-radius:8px"></div>';
+        }
+        left.appendChild(logoBox);
+        wrapper.appendChild(left);
+      }
+
+      // right: text only
+      var right = document.createElement('div');
+      right.className = 'detail-text detail-scroll';
+      var inner = '<h3>' + info.title + '</h3>';
+      if (info.subtitle) inner += '<div class="text-sm text-slate-600" style="margin-bottom:6px;">' + info.subtitle + '</div>';
+      inner += '<div class="meta">' + info.date + '</div><ul style="margin-top:8px;">';
+      info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
+      inner += '</ul>';
+      right.innerHTML = inner;
+      wrapper.appendChild(right);
+
+      return wrapper;
+    }
+
+    // attach click handlers for experience and education cards
+    document.querySelectorAll('.experience-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var key = card.dataset.fullId;
+        // find logo if available (but for education we will not show the logo)
+        var logoImg = card.querySelector('.logo-square img') || card.querySelector('img');
+        var logoSrc = logoImg ? logoImg.src : null;
+
+        // if education -> only show text (showLogo false)
+        var showLogo = key !== 'education-full';
+        var node = buildDetailOverlay(key, logoSrc, showLogo);
+        if (node) {
+          // set header title & subtitle/date for this specific detail block
+          var infoForHeader = detailsMap[key];
+          var headerTitle = infoForHeader ? infoForHeader.title : '';
+          openOverlay(headerTitle, node);
+
+          // replace zoomSub with subtitle + date for these detail overlays
+          if (infoForHeader) {
+            zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
+          }
+        }
+      });
+      card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
+    });
+
+    // prototype gallery click
+    document.querySelectorAll('.img-gallery').forEach(function(el){
+      el.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        try {
+          var items = JSON.parse(el.dataset.images);
+          var prepared = items.map(function(it){ return (typeof it==='string')? {src:it,title:''}: {src:it.src,title:it.title||''}; });
+          openOverlay(el.dataset.title || 'Preview', prepared);
+        } catch (err) {
+          var img = el.querySelector('img.thumb');
+          if (img) openOverlay(el.dataset.title || 'Preview', img.src);
+        }
+      });
+      el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
+    });
+
+    // resume & portfolio preview handlers (header download shown, bottom close removed)
+    var resumeLink = document.getElementById('resumeLink');
+    var portfolioLink = document.getElementById('portfolioLink');
+    if (resumeLink) {
+      resumeLink.addEventListener('click', function(e){
+        e.preventDefault();
+        var url = resumeLink.getAttribute('href');
+        openOverlay('Resume — Preview', url, { filePreview: true, fileName: 'Edward Hong Resume - 2025.pdf' });
+      });
+    }
+    if (portfolioLink) {
+      portfolioLink.addEventListener('click', function(e){
+        e.preventDefault();
+        var url = portfolioLink.getAttribute('href');
+        openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2025.pdf' });
+      });
+    }
   </script>
 </body>
 </html>
