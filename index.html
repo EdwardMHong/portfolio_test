@@ -407,16 +407,20 @@
     <div class="mt-8 text-center text-sm text-slate-500 reveal">2025-2026</div>
   </footer>
 
-  <!-- SCRIPTS -->
+  <!-- CANVAS: network nodes that orbit around origins and respond softly to mouse -->
   <script>
   /*
-    Interactive canvas background
-    - lightweight particle system that responds to mouse
-    - performance-conscious: particle count scales with viewport
+    Canvas: network of nodes that stay near their origin (spring + damping),
+    lightly repelled by the mouse. Nodes connect when close.
+    - Nodes have an origin (x0,y0) and limited displacement from origin.
+    - Mouse causes a soft repulsion within a radius.
+    - Lightweight and performance-conscious.
   */
   (function(){
     const canvas = document.getElementById('bgCanvas');
+    if(!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
+
     let w = 0, h = 0, DPR = Math.max(1, window.devicePixelRatio || 1);
     function resize() {
       w = canvas.clientWidth || window.innerWidth;
@@ -428,86 +432,124 @@
     window.addEventListener('resize', resize, { passive: true });
     resize();
 
-    // particle params
-    const BASE_COUNT = Math.round(Math.min(80, Math.max(28, (w*h) / (1200*1200) * 60)));
-    const COUNT = Math.max(24, BASE_COUNT);
+    // scale particle count with viewport but keep it reasonable
+    const AREA = Math.max(300000, w * h);
+    const BASE = Math.round(Math.min(90, Math.max(28, AREA / (1100*1100) * 60)));
+    const COUNT = Math.max(24, BASE);
+
     const particles = [];
-    const mouse = { x: w/2, y: h/2, vx:0, vy:0, active:false };
+    const mouse = { x: w/2, y: h/2, active:false, time:0 };
 
-    function rand(min, max) { return min + Math.random() * (max-min); }
+    function rand(min, max){ return min + Math.random() * (max - min); }
 
-    class P {
-      constructor(){
-        this.reset();
+    class Node {
+      constructor() {
+        // choose a nice origin spread biased slightly toward center
+        const margin = 0.08;
+        this.x0 = rand(w * margin, w * (1 - margin));
+        this.y0 = rand(h * margin, h * (1 - margin));
+        // start near origin with slight jitter
+        this.x = this.x0 + rand(-12, 12);
+        this.y = this.y0 + rand(-12, 12);
+        this.vx = rand(-0.3, 0.3);
+        this.vy = rand(-0.3, 0.3);
+        this.r = rand(1.4, 3.2);
+        this.alpha = rand(0.09, 0.28);
+        this.maxDisp = rand(36, 90); // how far from origin it can stray
+        this.colorBase = `99,102,241`; // bluish (r,g,b)
       }
-      reset(){
-        this.x = rand(0, w);
-        this.y = rand(0, h);
-        this.vx = rand(-0.2, 0.2);
-        this.vy = rand(-0.15, 0.15);
-        this.r = rand(1.6, 3.6);
-        this.alpha = rand(0.12, 0.32);
-        this.color = `rgba(30,58,138,${this.alpha})`; // bluish
-      }
-      step(){
-        // slight attraction/repulsion to mouse for subtle interactivity
-        const dx = this.x - mouse.x;
-        const dy = this.y - mouse.y;
-        const dist = Math.sqrt(dx*dx + dy*dy) + 0.001;
-        // when mouse active, particles are mildly repulsed
-        if (mouse.active && dist < 220) {
-          const force = (220 - dist) / 220;
-          this.vx += (dx / dist) * 0.06 * force;
-          this.vy += (dy / dist) * 0.06 * force;
-        } else {
-          // very gentle drift back to center
-          const cx = (w/2 - this.x) * 0.0006;
-          const cy = (h/2 - this.y) * 0.0006;
-          this.vx += cx;
-          this.vy += cy;
+
+      step(dt) {
+        // spring force toward origin
+        const k = 0.012; // spring stiffness
+        const dx = this.x0 - this.x;
+        const dy = this.y0 - this.y;
+        // small random 'breathing' so nodes aren't perfectly static
+        const noise = 0.12 * (Math.sin((this.x0 + this.y0) * 0.001 + performance.now()*0.0006) );
+        this.vx += (dx * k + noise * (Math.random()-0.5));
+        this.vy += (dy * k + noise * (Math.random()-0.5));
+
+        // mouse interaction: soft repulsion
+        if (mouse.active) {
+          const mx = this.x - mouse.x;
+          const my = this.y - mouse.y;
+          const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
+          const R = 140; // interaction radius
+          if (dist < R) {
+            const strength = (1 - (dist / R)) * 0.9; // 0..0.9
+            // repulsion away from mouse
+            this.vx += (mx / dist) * strength * 0.9;
+            this.vy += (my / dist) * strength * 0.9;
+          }
         }
-        // friction + movement
-        this.vx *= 0.97;
-        this.vy *= 0.97;
-        this.x += this.vx;
-        this.y += this.vy;
-        // wrap edges softly
-        if (this.x < -20) this.x = w + 20;
-        if (this.x > w + 20) this.x = -20;
-        if (this.y < -20) this.y = h + 20;
-        if (this.y > h + 20) this.y = -20;
+
+        // damping
+        this.vx *= 0.91;
+        this.vy *= 0.91;
+
+        // integrate
+        this.x += this.vx * (dt || 1);
+        this.y += this.vy * (dt || 1);
+
+        // gently clamp so node stays near origin
+        const ox = this.x - this.x0;
+        const oy = this.y - this.y0;
+        const od = Math.sqrt(ox*ox + oy*oy);
+        if (od > this.maxDisp) {
+          const back = (od - this.maxDisp) * 0.12;
+          this.vx -= (ox / od) * back;
+          this.vy -= (oy / od) * back;
+        }
+
+        // mild wrap if extremely out of bounds (safety)
+        if (this.x < -50) this.x = w + 50;
+        if (this.x > w + 50) this.x = -50;
+        if (this.y < -50) this.y = h + 50;
+        if (this.y > h + 50) this.y = -50;
       }
+
       draw(ctx) {
-        ctx.beginPath();
-        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r*4);
-        g.addColorStop(0, `rgba(99,102,241,${Math.min(0.6,this.alpha*1.6)})`);
-        g.addColorStop(0.35, `rgba(99,102,241,${this.alpha*0.8})`);
+        // soft glow
+        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r*6);
+        g.addColorStop(0, `rgba(${this.colorBase},${Math.min(0.7,this.alpha*1.9)})`);
+        g.addColorStop(0.35, `rgba(${this.colorBase},${this.alpha*0.9})`);
         g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = g;
-        ctx.fillRect(this.x - this.r*4, this.y - this.r*4, this.r*8, this.r*8);
+        ctx.fillRect(this.x - this.r*6, this.y - this.r*6, this.r*12, this.r*12);
+
+        // subtle core
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${this.colorBase},${0.95})`;
+        ctx.globalAlpha = Math.min(0.95, this.alpha*1.2);
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
     }
 
-    function initParticles() {
+    function initParticles(){
       particles.length = 0;
-      for (let i=0;i<COUNT;i++) particles.push(new P());
+      for (let i=0;i<COUNT;i++) particles.push(new Node());
     }
     initParticles();
 
-    // connect lines - low alpha lines between close particles
     function drawConnections(){
+      // connect neighboring nodes within threshold
+      const TH = 110;
       ctx.save();
       for (let i=0;i<particles.length;i++){
         const a = particles[i];
         for (let j=i+1;j<particles.length;j++){
           const b = particles[j];
-          const dx = a.x - b.x, dy = a.y - b.y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 120) {
-            const alpha = Math.max(0, 0.12 * (1 - dist/120));
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d2 = dx*dx + dy*dy;
+          if (d2 < TH*TH) {
+            const dist = Math.sqrt(d2);
+            const alpha = Math.max(0, 0.12 * (1 - dist/TH));
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(99,102,241,${alpha*0.9})`;
-            ctx.lineWidth = 0.8;
+            ctx.strokeStyle = `rgba(99,102,241,${alpha})`;
+            ctx.lineWidth = 0.7;
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.stroke();
@@ -517,57 +559,67 @@
       ctx.restore();
     }
 
-    // render loop
-    let rafId;
-    function loop(){
+    // animation
+    let raf = null;
+    let last = performance.now();
+    function loop(now){
+      const dt = Math.min(1.8, (now - last) / 16.66); // normalized delta, capped
+      last = now;
+
       ctx.clearRect(0,0,w,h);
-      // subtle radial vignette
-      const vg = ctx.createLinearGradient(0,0,0,h);
-      vg.addColorStop(0, 'rgba(255,255,255,0.02)');
-      vg.addColorStop(1, 'rgba(240,248,255,0.02)');
-      ctx.fillStyle = vg;
+
+      // subtle background wash
+      const bg = ctx.createLinearGradient(0,0,0,h);
+      bg.addColorStop(0, 'rgba(255,255,255,0.02)');
+      bg.addColorStop(1, 'rgba(240,248,255,0.02)');
+      ctx.fillStyle = bg;
       ctx.fillRect(0,0,w,h);
 
-      // update & draw particles
+      // step & draw nodes
       for (let p of particles) {
-        p.step();
-        p.draw(ctx);
+        p.step(dt);
       }
+
+      // draw faint connections first (under glow)
       drawConnections();
 
-      rafId = requestAnimationFrame(loop);
+      // draw nodes on top
+      for (let p of particles) p.draw(ctx);
+
+      raf = requestAnimationFrame(loop);
     }
 
-    // mouse handling (desktop & touch)
-    window.addEventListener('mousemove', function(e){
+    // mouse interactions
+    canvas.addEventListener('mousemove', function(e){
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
       mouse.active = true;
-      clearTimeout(mouse._timeout);
-      mouse._timeout = setTimeout(()=>{ mouse.active = false; }, 1200);
+      clearTimeout(mouse._t);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 900);
     }, { passive: true });
 
-    window.addEventListener('touchmove', function(e){
-      if (e.touches && e.touches[0]) {
-        const t = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = t.clientX - rect.left;
-        mouse.y = t.clientY - rect.top;
-        mouse.active = true;
-        clearTimeout(mouse._timeout);
-        mouse._timeout = setTimeout(()=>{ mouse.active = false; }, 1200);
-      }
+    canvas.addEventListener('touchmove', function(e){
+      if (!e.touches || !e.touches[0]) return;
+      const t = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = t.clientX - rect.left;
+      mouse.y = t.clientY - rect.top;
+      mouse.active = true;
+      clearTimeout(mouse._t);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 900);
     }, { passive: true });
 
-    // start
-    function start() {
+    // adjust on resize and restart loop
+    function start(){
       resize();
       initParticles();
-      cancelAnimationFrame(rafId);
-      loop();
+      cancelAnimationFrame(raf);
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
     }
     window.addEventListener('load', start);
+    window.addEventListener('orientationchange', start);
   })();
   </script>
 
