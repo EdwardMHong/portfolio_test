@@ -176,6 +176,22 @@
 
     :root.dark-mode .overlay-backdrop { background: rgba(1,2,6,0.8); }
 
+    /* Ensure zoom panel, zoom content and other special blocks match card color in dark mode */
+    :root.dark-mode .zoom-panel,
+    :root.dark-mode #zoomContent,
+    :root.dark-mode .img-card,
+    :root.dark-mode .logo-square,
+    :root.dark-mode section#education,
+    :root.dark-mode .snapshot,
+    :root.dark-mode .pill-nav a {
+      background: var(--card) !important;
+      border-color: rgba(255,255,255,0.04) !important;
+      color: var(--text) !important;
+    }
+
+    /* override Tailwind/bg-slate-50 used on the zoomContent wrapper */
+    :root.dark-mode .bg-slate-50 { background: var(--card) !important; }
+
     /* Dark-mode toggle button (top-right) */
     #darkToggle {
       position: fixed;
@@ -1170,6 +1186,7 @@
 
     function renderToggleIcon(isDark) {
       if (!darkIcon) return;
+      // update icon
       if (isDark) {
         darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
         darkIcon.style.color = 'var(--primary)';
@@ -1179,6 +1196,8 @@
         darkIcon.style.color = 'var(--primary)';
         toggle.setAttribute('aria-pressed','false');
       }
+      // update label text to show the *action* (so when dark is ON, label reads "Light mode" meaning click will go to light)
+      if (toggleLabel) toggleLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
     }
 
     // initialize from localStorage or default (light)
