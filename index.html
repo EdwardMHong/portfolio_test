@@ -10,60 +10,84 @@
 
   <style>
     :root{
-      --primary:#1e40af;
-      --muted:#6b7280;
-      --card:#ffffff;
+      --primary: #1e40af;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --bg-top: #ffffff;
+      --bg-bottom: #eef6ff;
+      --text: #0f172a;
+      --faint: rgba(2,6,23,0.06);
+      --grid-opacity: 0.5;
+      --node-color: 99,102,241; /* rgb triple for canvas nodes (light) */
+      --node-alpha-mult: 1;
+      --line-alpha-mult: 1;
     }
+
+    /* Dark mode variables override (on documentElement.dark-mode) */
+    :root.dark-mode {
+      --primary: #60a5fa;
+      --muted: #94a3b8;
+      --card: #0b1220;
+      --bg-top: #06070a;
+      --bg-bottom: #071028;
+      --text: #e6eef9;
+      --faint: rgba(255,255,255,0.04);
+      --grid-opacity: 0.22;
+      --node-color: 140,156,255; /* slightly paler nodes for dark */
+      --node-alpha-mult: 0.72;
+      --line-alpha-mult: 0.9;
+    }
+
     html { scroll-behavior: smooth; }
 
-    /* reset small */
+    /* reset */
     * { box-sizing: border-box; }
 
     body{
       min-height:100vh;
       margin:0;
-      color:#0f172a;
+      color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       position:relative;
       overflow-x:hidden;
-      /* fallback gradient in case canvas is blocked */
-      background:
-        linear-gradient(180deg,#ffffff 0%, #f8fafc 40%, #eef6ff 100%);
+      background: linear-gradient(180deg, var(--bg-top) 0%, rgba(0,0,0,0) 40%);
     }
 
-    /* canvas background (interactive) - sits behind content: VERY bottom layer */
+    /* interactive canvas background - very bottom */
     #bgCanvas {
       position:fixed;
       inset:0;
       width:100%;
       height:100%;
-      z-index:-10;              /* <- very bottom */
+      z-index:-20; /* bottom-most */
       pointer-events:none;
       display:block;
-      opacity:1;
-      /* subtle blur to reduce eyestrain */
-      filter: blur(0.6px) saturate(.95);
+      /* reduce base brightness so it isn't an eyesore */
+      filter: blur(0.6px) saturate(.95) contrast(.95);
+      opacity: 1;
     }
 
-    /* faint diagonal overlay grid (kept subtle) */
+    /* faint diagonal overlay grid (subtle, adjusted by --grid-opacity) */
     body::before{
       content:'';
       position:fixed;
       inset:0;
       pointer-events:none;
       background-image:
-        linear-gradient(135deg, rgba(255,255,255,0.035) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.035) 50%, rgba(0,0,0,0) 50%),
-        linear-gradient(135deg, rgba(255,255,255,0.02) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.02) 50%, rgba(0,0,0,0) 50%);
+        linear-gradient(135deg, rgba(255,255,255,var(--grid-opacity)) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,var(--grid-opacity)) 50%, rgba(0,0,0,0) 50%),
+        linear-gradient(135deg, rgba(255,255,255,calc(var(--grid-opacity) - 0.02)) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,calc(var(--grid-opacity) - 0.02)) 50%, rgba(0,0,0,0) 50%);
       background-size: 28px 28px, 56px 56px;
-      opacity: .5;
-      z-index:0;
+      opacity: .7;
+      z-index:-10;
+      mix-blend-mode: overlay;
     }
 
-    .blob{ position:absolute; border-radius:28px; filter: blur(32px); opacity:.09; transform-origin:center; z-index:0; pointer-events:none; }
+    .blob{ position:absolute; border-radius:28px; filter: blur(32px); opacity:.07; transform-origin:center; z-index:-11; pointer-events:none; }
     @keyframes floatA { 0%{transform:translateY(0)}50%{transform:translateY(-36px) translateX(8px)}100%{transform:translateY(0)}}
     @keyframes floatB { 0%{transform:translateY(0)}50%{transform:translateY(48px) translateX(-12px)}100%{transform:translateY(0)}}
     .blob.a{ animation: floatA 9s linear infinite; } .blob.b{ animation: floatB 11s linear infinite; }
 
+    /* UI sits above canvas */
     .content { position:relative; z-index:10; }
 
     .reveal { opacity: 0; transform: translateY(10px); transition: all .55s cubic-bezier(.22,.9,.35,1); }
@@ -73,7 +97,7 @@
     .img-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(2,6,23,0.08); }
     .img-card img.thumb { width:100%; height:100%; display:block; object-fit:cover; }
 
-    .logo-square { width:160px; height:160px; flex:0 0 160px; display:flex; align-items:center; justify-content:center; background:white; border-radius:12px; border:1px solid rgba(14,165,233,0.06); overflow:hidden; }
+    .logo-square { width:160px; height:160px; flex:0 0 160px; display:flex; align-items:center; justify-content:center; background:var(--card); border-radius:12px; border:1px solid rgba(14,165,233,0.06); overflow:hidden; }
     .logo-square img { width:100%; height:100%; object-fit:contain; padding:10px; display:block; }
 
     @media (max-width:640px){ .logo-square { width:120px; height:120px; flex:0 0 120px; } }
@@ -81,7 +105,7 @@
     .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:90; }
     .overlay.show { display:flex; }
     .overlay-backdrop { position:absolute; inset:0; background:rgba(2,6,23,0.6); backdrop-filter: blur(4px); }
-    .zoom-panel { position:relative; width:min(94%,1000px); max-height:94vh; overflow:auto; border-radius:14px; background:var(--card); box-shadow: 0 20px 60px rgba(2,6,23,0.28); transform: translateY(10px) scale(.98); opacity:0; transition: transform .36s cubic-bezier(.2,.9,.3,1), opacity .26s ease; }
+    .zoom-panel { position:relative; width:min(94%,1000px); max-height:94vh; overflow:auto; border-radius:14px; background:var(--card); color:var(--text); box-shadow: 0 20px 60px rgba(2,6,23,0.28); transform: translateY(10px) scale(.98); opacity:0; transition: transform .36s cubic-bezier(.2,.9,.3,1), opacity .26s ease; }
     .zoom-panel.show { transform: translateY(0) scale(1); opacity:1; }
     .zoom-img { width:100%; height:auto; max-height:78vh; object-fit:contain; display:block; border-radius:10px; background:linear-gradient(180deg,#eef2ff,#fff); }
 
@@ -98,22 +122,19 @@
 
     .education-thumb { height:14rem; }
 
-    /* reduce gap between prototype and contact */
     #prototypes { margin-bottom:0; }
     footer#contact { margin-top:1rem; }
 
     .detail-wrap { display:flex; gap:20px; align-items:flex-start; }
     @media (max-width:900px){ .detail-wrap { flex-direction:column; } }
-    .detail-text { flex:1; color:#0f172a; }
+    .detail-text { flex:1; color:var(--text); }
     .detail-text h3 { margin-top:0; margin-bottom:8px; font-size:1.25rem; }
-    .detail-text .meta { color:#475569; margin-bottom:12px; }
+    .detail-text .meta { color:var(--muted); margin-bottom:12px; }
     .detail-scroll { max-height:74vh; overflow:auto; padding-right:6px; }
 
-    /* header action download anchor */
     #headerDownload { display:none; text-decoration:none; padding:.45rem .8rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:600; }
     #headerDownload.secondary { background:#94a3b8; color:#fff; }
 
-    /* content font bump and zoom layout tweaks requested earlier */
     .detail-text,
     .detail-text ul li,
     .text-sm,
@@ -128,30 +149,85 @@
     .detail-text ul { margin-top: 8px; padding-left: 18px; }
     .detail-text ul li { margin-bottom: 6px; }
 
-    /* small screens safeguard */
     @media (max-width:420px){
       .detail-text, .text-sm { font-size:14.5px !important; }
       .zoom-panel { width: 96% !important; }
       #zoomContent { min-height: 42vh !important; }
     }
+
+    /* Dark-mode toggle button (top-right) */
+    #darkToggle {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 60;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+      border-radius: 9999px;
+      padding: 6px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(2,6,23,0.06);
+      cursor: pointer;
+      width:46px;
+      height:46px;
+      justify-content:center;
+      transition: transform .15s ease;
+    }
+    #darkToggle:hover { transform: translateY(-3px); }
+    :root.dark-mode #darkToggle {
+      background: linear-gradient(180deg, rgba(10,14,24,0.6), rgba(6,10,18,0.5));
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.22);
+    }
+    #darkToggle svg { width:20px; height:20px; display:block; }
+
+    /* small label when hovered (a11y) */
+    #darkToggleLabel {
+      position: fixed;
+      right: 72px;
+      top: 22px;
+      z-index: 60;
+      font-size: 13px;
+      color: var(--muted);
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .14s ease, transform .14s ease;
+    }
+    #darkToggle:hover + #darkToggleLabel { opacity: 1; transform: translateY(0); pointer-events: none; }
+
   </style>
 </head>
 <body>
-  <!-- interactive canvas background (very bottom) -->
+  <!-- interactive canvas background -->
   <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
-  <!-- decorative blobs (kept but subtle) -->
+  <!-- dark mode toggle -->
+  <button id="darkToggle" aria-pressed="false" title="Toggle dark mode" aria-label="Toggle dark mode">
+    <!-- we'll show sun or moon via JS -->
+    <svg id="darkIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)">
+      <circle cx="12" cy="12" r="4" fill="currentColor" style="color:var(--primary)"></circle>
+    </svg>
+  </button>
+  <div id="darkToggleLabel">Dark mode</div>
+
+  <!-- decorative blobs -->
   <div aria-hidden="true">
-    <div class="blob a" style="left:-6%; top:-8%; width:680px; height:420px; background: linear-gradient(135deg, rgba(37,99,235,0.22), rgba(99,102,241,0.10));"></div>
-    <div class="blob b" style="right:3%; top:8%; width:520px; height:360px; background: linear-gradient(135deg, rgba(96,165,250,0.18), rgba(99,102,241,0.04));"></div>
+    <div class="blob a" style="left:-6%; top:-8%; width:680px; height:420px; background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(99,102,241,0.08));"></div>
+    <div class="blob b" style="right:3%; top:8%; width:520px; height:360px; background: linear-gradient(135deg, rgba(96,165,250,0.14), rgba(99,102,241,0.04));"></div>
   </div>
 
-  <!-- Header (nav order updated) -->
+  <!-- Header -->
   <header class="relative overflow-hidden">
     <div class="content max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold">Edward Hong</h1>
-        <p class="text-sm text-slate-600">Nanotechnology Engineering student, prototyping and materials R&D</p>
+        <p class="text-sm text-slate-600">Nanotechnology Engineering student, prototyping and materials R&amp;D</p>
       </div>
       <nav class="hidden md:flex gap-6 text-sm items-center">
         <a href="#prototypes" class="hover:underline">Project</a>
@@ -195,7 +271,7 @@
       </div>
     </section>
 
-    <!-- PROJECT (moved to top) -->
+    <!-- PROJECT (top) -->
     <section id="prototypes" class="mt-10">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Prototype: Optical Contact Angle Goniometer</h3>
@@ -226,7 +302,7 @@
       </div>
     </section>
 
-    <!-- WORK (second) -->
+    <!-- WORK -->
     <section id="experience" class="mt-12">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Work Experience</h3>
@@ -326,7 +402,7 @@
       </div>
     </section>
 
-    <!-- EDUCATION (last) -->
+    <!-- EDUCATION -->
     <section id="education" class="mt-12 bg-[linear-gradient(180deg,#ffffff,rgba(240,249,255,0.6))] rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
       <div class="mb-4">
         <h3 class="text-2xl md:text-3xl font-semibold">Education</h3>
@@ -380,7 +456,6 @@
           <div class="ml-auto flex items-center gap-3">
             <button id="prevImgBtn" class="text-slate-600" aria-label="Previous" style="font-size:20px;display:inline-block">&lt;</button>
             <button id="nextImgBtn" class="text-slate-600" aria-label="Next" style="font-size:20px;display:inline-block">&gt;</button>
-            <!-- header download button for file previews -->
             <a id="headerDownload" href="#" class="" target="_blank" rel="noreferrer">Download</a>
             <button id="zoomClose" class="ml-2 text-slate-600" aria-label="Close preview">Close</button>
           </div>
@@ -410,7 +485,7 @@
     <div class="mt-8 text-center text-sm text-slate-500 reveal">2025-2026</div>
   </footer>
 
-  <!-- CANVAS SCRIPT: nodes with spring + damping, dimmer glow, more visible lines, links to nearest neighbors -->
+  <!-- CANVAS SCRIPT: more interactive mouse influence + scheme aware -->
   <script>
   (function(){
     const canvas = document.getElementById('bgCanvas');
@@ -425,18 +500,31 @@
       canvas.height = Math.floor(h * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     }
+
     window.addEventListener('resize', function(){ resize(); initParticles(); }, { passive: true });
     resize();
 
-    // particle count scale (keeps performance in check)
     const AREA = Math.max(300000, w * h);
-    const BASE = Math.round(Math.min(100, Math.max(28, AREA / (1100*1100) * 72)));
-    const COUNT = Math.max(24, BASE);
+    const BASE = Math.round(Math.min(120, Math.max(32, AREA / (1100*1100) * 84)));
+    const COUNT = Math.max(28, BASE);
 
     const particles = [];
     const mouse = { x: w/2, y: h/2, active:false, time:0 };
 
     function rand(min, max){ return min + Math.random() * (max - min); }
+
+    // mode-aware color getter
+    function getNodeColorRGB() {
+      // read css var from root (string like "99,102,241")
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--node-color') || '99,102,241';
+      return v.trim();
+    }
+    function getAlphaMult() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-alpha-mult')) || 1;
+    }
+    function getLineAlphaMult() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--line-alpha-mult')) || 1;
+    }
 
     class Node {
       constructor() {
@@ -448,72 +536,74 @@
         this.vx = rand(-0.25, 0.25);
         this.vy = rand(-0.25, 0.25);
         this.r = rand(1.2, 3.0);
-        this.alpha = rand(0.06, 0.22); // overall dimmer than before
-        this.maxDisp = rand(36, 86);
-        this.colorBase = `99,102,241`; // bluish
+        this.alpha = rand(0.06, 0.22);
+        this.maxDisp = rand(46, 110); // a bit more give so mouse moves them more
       }
 
       step(dt) {
-        const k = 0.012; // spring stiffness (keeps node near origin)
+        const k = 0.010; // slightly softer spring so mouse can move nodes more
         const dx = this.x0 - this.x;
         const dy = this.y0 - this.y;
         const noise = 0.09 * (Math.sin((this.x0 + this.y0) * 0.001 + performance.now()*0.00055));
         this.vx += (dx * k + noise * (Math.random()-0.5));
         this.vy += (dy * k + noise * (Math.random()-0.5));
 
-        // mouse interaction: soft repulsion similar magnitude to the earlier interactive example
+        // mouse interaction: increased influence for more "interactive" feel
         if (mouse.active) {
           const mx = this.x - mouse.x;
           const my = this.y - mouse.y;
           const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
-          const R = 160; // interaction radius (slightly larger)
+          const R = 220; // larger radius so mouse affects more nodes
           if (dist < R) {
-            const strength = (1 - (dist / R)) * 0.85; // 0..0.85
-            // repulsion away from mouse (scaled to feel like original)
-            this.vx += (mx / dist) * strength * 0.9;
-            this.vy += (my / dist) * strength * 0.9;
+            // much stronger force than before (user requested more movement)
+            const strength = (1 - (dist / R)) * 1.6; // up to ~1.6
+            this.vx += (mx / dist) * strength * 1.6; // extra multiplier
+            this.vy += (my / dist) * strength * 1.6;
           }
         }
 
         // damping
-        this.vx *= 0.92;
-        this.vy *= 0.92;
+        this.vx *= 0.90;
+        this.vy *= 0.90;
 
         // integrate
         this.x += this.vx * (dt || 1);
         this.y += this.vy * (dt || 1);
 
-        // clamp back toward origin if exceeding maxDisp
+        // clamp back if too far from origin (soft)
         const ox = this.x - this.x0;
         const oy = this.y - this.y0;
         const od = Math.sqrt(ox*ox + oy*oy);
         if (od > this.maxDisp) {
-          const back = (od - this.maxDisp) * 0.12;
+          const back = (od - this.maxDisp) * 0.14;
           this.vx -= (ox / od) * back;
           this.vy -= (oy / od) * back;
         }
 
         // safety wrap
-        if (this.x < -50) this.x = w + 50;
-        if (this.x > w + 50) this.x = -50;
-        if (this.y < -50) this.y = h + 50;
-        if (this.y > h + 50) this.y = -50;
+        if (this.x < -60) this.x = w + 60;
+        if (this.x > w + 60) this.x = -60;
+        if (this.y < -60) this.y = h + 60;
+        if (this.y > h + 60) this.y = -60;
       }
 
-      draw(ctx) {
-        // dimmer soft glow
-        const glowRadius = this.r * 5;
+      draw(ctx, rgbStr, alphaMult) {
+        // glow built from CSS variable and mode
+        const colorBase = rgbStr || '99,102,241';
+        const alpha = Math.min(0.45, this.alpha * (alphaMult || 1));
+
+        const glowRadius = this.r * 5.6;
         const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius);
-        g.addColorStop(0, `rgba(${this.colorBase},${Math.min(0.45,this.alpha*1.2)})`);
-        g.addColorStop(0.35, `rgba(${this.colorBase},${Math.max(0.06,this.alpha*0.7)})`);
+        g.addColorStop(0, `rgba(${colorBase},${Math.min(0.44, alpha * 0.88)})`);
+        g.addColorStop(0.35, `rgba(${colorBase},${Math.max(0.04, alpha * 0.5)})`);
         g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = g;
         ctx.fillRect(this.x - glowRadius, this.y - glowRadius, glowRadius*2, glowRadius*2);
 
-        // subtle core (less bright)
+        // core
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${this.colorBase},${0.78})`;
-        ctx.globalAlpha = Math.min(0.86, this.alpha*1.05);
+        ctx.fillStyle = `rgba(${colorBase},${0.78})`;
+        ctx.globalAlpha = Math.min(0.86, alpha * 1.05);
         ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
         ctx.fill();
         ctx.globalAlpha = 1;
@@ -526,9 +616,8 @@
     }
     initParticles();
 
-    // helper: compute nearest neighbors (k nearest) for more visible network
+    // nearest neighbor computation for stronger net
     function computeNearestNeighbors(k) {
-      // naive O(n^2) but COUNT kept small for performance
       const neighbors = new Array(particles.length);
       for (let i = 0; i < particles.length; i++) {
         const arr = [];
@@ -548,21 +637,16 @@
     let cachedNeighbors = null;
     let neighborTicker = 0;
 
-    function drawConnections(){
-      // two-layer connection:
-      // 1) nearest neighbors (k) with stronger lines
-      // 2) additional distance-based faint links
-      const TH = 150;  // distance threshold for distance-based links
-      const width = Math.min(1.2, Math.max(0.6, (w/1400))); // scale stroke with viewport
+    function drawConnections(rgbStr, lineAlphaMult) {
+      const TH = 160;
       ctx.save();
 
-      // recompute neighbors periodically (not every frame) for stability & perf
       neighborTicker++;
-      if (!cachedNeighbors || neighborTicker % 6 === 0) {
-        cachedNeighbors = computeNearestNeighbors(3); // connect to 3 nearest
+      if (!cachedNeighbors || neighborTicker % 5 === 0) {
+        cachedNeighbors = computeNearestNeighbors(4); // connect to 4 nearest for denser net
       }
 
-      // draw nearest neighbor strong-ish lines
+      // stronger nearest lines
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         const list = cachedNeighbors[i] || [];
@@ -570,11 +654,11 @@
           const b = particles[list[j]];
           const dx = a.x - b.x, dy = a.y - b.y;
           const dist = Math.sqrt(dx*dx + dy*dy);
-          const alpha = Math.max(0, 0.18 * (1 - dist / (TH*1.2))); // slightly stronger
+          const alpha = Math.max(0, 0.20 * (1 - dist / (TH*1.1))) * (lineAlphaMult || 1);
           if (alpha > 0.01) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(99,102,241,${alpha})`;
-            ctx.lineWidth = width;
+            ctx.strokeStyle = `rgba(${rgbStr},${alpha})`;
+            ctx.lineWidth = 0.9;
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.stroke();
@@ -582,8 +666,8 @@
         }
       }
 
-      // additional faint distance-based links (wider threshold)
-      const TH2 = 200;
+      // additional faint links (distance-based)
+      const TH2 = 220;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i+1; j < particles.length; j++) {
@@ -592,11 +676,11 @@
           const d2 = dx*dx + dy*dy;
           if (d2 < TH2*TH2) {
             const dist = Math.sqrt(d2);
-            const alpha = Math.max(0, 0.09 * (1 - dist/TH2)); // fainter
+            const alpha = Math.max(0, 0.10 * (1 - dist/TH2)) * (lineAlphaMult || 1);
             if (alpha > 0.008) {
               ctx.beginPath();
-              ctx.strokeStyle = `rgba(99,102,241,${alpha * 0.95})`;
-              ctx.lineWidth = 0.6 * Math.max(0.6, (1 - dist/TH2) + 0.3);
+              ctx.strokeStyle = `rgba(${rgbStr},${alpha * 0.95})`;
+              ctx.lineWidth = 0.6 * Math.max(0.6, (1 - dist/TH2) + 0.25);
               ctx.moveTo(a.x, a.y);
               ctx.lineTo(b.x, b.y);
               ctx.stroke();
@@ -617,33 +701,36 @@
 
       ctx.clearRect(0,0,w,h);
 
-      // very subtle wash to blend with page
+      // subtle wash to blend with page
       const bg = ctx.createLinearGradient(0,0,0,h);
       bg.addColorStop(0, 'rgba(255,255,255,0.02)');
       bg.addColorStop(1, 'rgba(240,248,255,0.02)');
       ctx.fillStyle = bg;
       ctx.fillRect(0,0,w,h);
 
-      // step nodes
+      // step
       for (let p of particles) p.step(dt);
 
-      // draw connections BEFORE nodes so nodes sit above lines
-      drawConnections();
+      // prepare mode-aware color & alpha multipliers
+      const rgbStr = getNodeColorRGB();
+      const alphaMult = getAlphaMult();
+      const lineMult = getLineAlphaMult();
 
-      // draw nodes on top
-      for (let p of particles) p.draw(ctx);
+      // draw connections then nodes
+      drawConnections(rgbStr, lineMult);
+      for (let p of particles) p.draw(ctx, rgbStr, alphaMult);
 
       raf = requestAnimationFrame(loop);
     }
 
-    // mouse interactions - similar influence as previous versions
+    // mouse interactions
     canvas.addEventListener('mousemove', function(e){
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
       mouse.active = true;
       clearTimeout(mouse._t);
-      mouse._t = setTimeout(()=>{ mouse.active = false; }, 900);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650); // slightly snappier
     }, { passive: true });
 
     canvas.addEventListener('touchmove', function(e){
@@ -654,10 +741,9 @@
       mouse.y = t.clientY - rect.top;
       mouse.active = true;
       clearTimeout(mouse._t);
-      mouse._t = setTimeout(()=>{ mouse.active = false; }, 900);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650);
     }, { passive: true });
 
-    // restart loop and particles
     function start(){
       resize();
       initParticles();
@@ -671,7 +757,7 @@
   })();
   </script>
 
-  <!-- Original page scripts (unchanged behavior for overlays/galleries/detail overlays) -->
+  <!-- Main page scripts (overlays, galleries, details) -->
   <script>
     // reveal observer
     (function(){
@@ -682,7 +768,7 @@
       els.forEach(function(el){ obs.observe(el); });
     })();
 
-    // overlay controls
+    // overlay controls (unchanged logic)
     var overlay = document.getElementById('overlay');
     var zoomPanel = document.getElementById('zoomPanel');
     var zoomContent = document.getElementById('zoomContent');
@@ -697,7 +783,6 @@
     var gallery = [];
     var galleryIndex = 0;
 
-    // details for overlays (education & experience)
     var detailsMap = {
       "h2nano": {
         "title": "Material Science Specialist",
@@ -768,7 +853,6 @@
       gallery = [];
       galleryIndex = 0;
 
-      // hide headerDownload by default
       headerDownload.style.display = 'none';
       headerDownload.href = '#';
       headerDownload.removeAttribute('download');
@@ -778,7 +862,6 @@
         renderGalleryImage(0);
       } else if (typeof content === 'string') {
         if (opts.filePreview) {
-          // file preview: show iframe and header download
           renderFilePreview(content, opts);
         } else {
           renderSingle(content);
@@ -827,13 +910,11 @@
       zoomContent.appendChild(img);
     }
 
-    // render file preview (iframe) and set header download
     function renderFilePreview(fileUrl, opts) {
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
       zoomContent.innerHTML = '';
 
-      // larger embed area
       var wrapper = document.createElement('div');
       wrapper.style.width = '100%';
       wrapper.style.display = 'flex';
@@ -843,13 +924,12 @@
       var embed = document.createElement('iframe');
       embed.src = fileUrl;
       embed.style.width = '100%';
-      embed.style.height = '78vh'; // expanded preview area
+      embed.style.height = '78vh';
       embed.style.border = '0';
       wrapper.appendChild(embed);
 
       zoomContent.appendChild(wrapper);
 
-      // configure header download button
       headerDownload.href = fileUrl;
       if (opts.fileName) headerDownload.setAttribute('download', opts.fileName);
       headerDownload.style.display = 'inline-block';
@@ -869,7 +949,7 @@
       }, 260);
     }
 
-    // event listeners
+    // events
     zoomClose.addEventListener('click', closeOverlay);
     overlayBackdrop.addEventListener('click', closeOverlay);
     window.addEventListener('keydown', function(e){
@@ -880,7 +960,7 @@
     prevBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }});
     nextBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }});
 
-    // make poster from GIF first frame (best-effort)
+    // GIF poster generator (best-effort)
     async function makeGifPoster(gifUrl) {
       try {
         var resp = await fetch(gifUrl);
@@ -898,7 +978,6 @@
       }
     }
 
-    // DOM ready
     document.addEventListener('DOMContentLoaded', function(){
       // set GIF posters
       var gifEls = document.querySelectorAll('.img-gif-poster');
@@ -908,7 +987,7 @@
         if (gif && img) {
           makeGifPoster(gif).then(function(poster){
             if (poster) img.src = poster;
-          }).catch(function(){ /* fallback: gif remains */ });
+          }).catch(function(){});
         }
       });
 
@@ -919,7 +998,7 @@
       });
     });
 
-    // thumbnail / gallery clicks (logos are not .img-placeholder)
+    // thumbnails
     document.querySelectorAll('.img-placeholder').forEach(function(el){
       el.addEventListener('click', function(ev){
         ev.stopPropagation();
@@ -929,7 +1008,7 @@
             var prepared = items.map(function(it){ return (typeof it === 'string') ? { src: it, title: '' } : { src: it.src, title: it.title || '' }; });
             openOverlay(el.dataset.title || 'Preview', prepared);
             return;
-          } catch (err) { /* fallback below */ }
+          } catch (err) {}
         }
         if (el.classList.contains('img-gif-poster') && el.dataset.gif) {
           openOverlay(el.dataset.title || 'Preview', el.dataset.gif);
@@ -955,14 +1034,13 @@
       el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
     });
 
-    // build detail overlay (logo optional)
+    // detail overlay builder
     function buildDetailOverlay(detailKey, logoSrc, showLogo) {
       var info = detailsMap[detailKey];
       if (!info) return null;
       var wrapper = document.createElement('div');
       wrapper.className = 'detail-wrap';
 
-      // left: logo (only for work experience; education passes showLogo=false)
       if (showLogo) {
         var left = document.createElement('div');
         left.style.flex = '0 0 auto';
@@ -984,7 +1062,6 @@
         wrapper.appendChild(left);
       }
 
-      // right: text only
       var right = document.createElement('div');
       right.className = 'detail-text detail-scroll';
       var inner = '<h3>' + info.title + '</h3>';
@@ -998,24 +1075,18 @@
       return wrapper;
     }
 
-    // attach click handlers for experience and education cards
+    // attach to experience & education cards
     document.querySelectorAll('.experience-card').forEach(function(card){
       card.addEventListener('click', function(){
         var key = card.dataset.fullId;
-        // find logo if available (but for education we will not show the logo)
         var logoImg = card.querySelector('.logo-square img') || card.querySelector('img');
         var logoSrc = logoImg ? logoImg.src : null;
-
-        // if education -> only show text (showLogo false)
         var showLogo = key !== 'education-full';
         var node = buildDetailOverlay(key, logoSrc, showLogo);
         if (node) {
-          // set header title and subtitle/date for this specific detail block
           var infoForHeader = detailsMap[key];
           var headerTitle = infoForHeader ? infoForHeader.title : '';
           openOverlay(headerTitle, node);
-
-          // replace zoomSub with subtitle + date for these detail overlays
           if (infoForHeader) {
             zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
           }
@@ -1024,7 +1095,7 @@
       card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
     });
 
-    // prototype gallery click
+    // project gallery
     document.querySelectorAll('.img-gallery').forEach(function(el){
       el.addEventListener('click', function(ev){
         ev.stopPropagation();
@@ -1040,7 +1111,7 @@
       el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
     });
 
-    // resume & portfolio preview handlers (header download shown, bottom close removed)
+    // resume & portfolio preview handlers
     var resumeLink = document.getElementById('resumeLink');
     var portfolioLink = document.getElementById('portfolioLink');
     if (resumeLink) {
@@ -1057,6 +1128,62 @@
         openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2025.pdf' });
       });
     }
+
+    // =========================
+    // Dark mode toggle behavior
+    // =========================
+    const toggle = document.getElementById('darkToggle');
+    const toggleLabel = document.getElementById('darkToggleLabel');
+    const darkIcon = document.getElementById('darkIcon');
+    const ROOT = document.documentElement;
+
+    function renderToggleIcon(isDark) {
+      // simple sun/moon SVG swap (we replace innerHTML of the svg element)
+      if (!darkIcon) return;
+      if (isDark) {
+        darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
+        darkIcon.style.color = 'var(--primary)';
+        toggle.setAttribute('aria-pressed','true');
+      } else {
+        darkIcon.innerHTML = '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>';
+        darkIcon.style.color = 'var(--primary)';
+        toggle.setAttribute('aria-pressed','false');
+      }
+    }
+
+    // initialize from localStorage or default (light)
+    const stored = localStorage.getItem('eh_portfolio_darkmode');
+    const initialIsDark = stored === '1';
+    if (initialIsDark) ROOT.classList.add('dark-mode');
+    renderToggleIcon(initialIsDark);
+
+    function setDarkMode(on, persist) {
+      if (on) {
+        ROOT.classList.add('dark-mode');
+      } else {
+        ROOT.classList.remove('dark-mode');
+      }
+      renderToggleIcon(on);
+      // persist
+      if (persist) localStorage.setItem('eh_portfolio_darkmode', on ? '1' : '0');
+      // update accessible label
+      toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+      // update canvas CSS-driven variables: nothing else needed since canvas reads CSS vars at draw-time
+    }
+
+    toggle.addEventListener('click', function(){
+      const isDark = ROOT.classList.contains('dark-mode');
+      setDarkMode(!isDark, true);
+    });
+
+    // support keyboard (Enter/Space)
+    toggle.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle.click();
+      }
+    });
+
   </script>
 </body>
 </html>
