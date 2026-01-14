@@ -10,149 +10,246 @@
 
   <style>
     :root{
-      --primary:#1e40af;
-      --muted:#6b7280;
-      --card:#ffffff;
-      --card-dark:#0b1220;
+      --primary: #1e40af;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --bg-top: #ffffff;
+      --bg-bottom: #eef6ff;
+      --text: #0f172a;
+      --faint: rgba(2,6,23,0.06);
+      --grid-opacity: 0.5;
+      --node-color: 99,102,241; /* rgb triple for canvas nodes (light) */
+      --node-alpha-mult: 1;
+      --line-alpha-mult: 1;
     }
-    html { scroll-behavior: smooth; }
 
-    /* Base page */
+    /* Dark mode variables override (on documentElement.dark-mode) */
+    :root.dark-mode {
+      --primary: #60a5fa;
+      --muted: #94a3b8;
+      --card: #071022;            /* darker card to contrast with solid bg */
+      --bg-top: #050612;         /* solid background color (no gradient) */
+      --bg-bottom: #050612;      /* same as top to avoid gradient */
+      --text: #e6eef9;
+      --faint: rgba(255,255,255,0.04);
+      --grid-opacity: 0.22;
+      --node-color: 150,162,255; /* slightly paler nodes for dark */
+      --node-alpha-mult: 1.18;   /* more visible in dark mode */
+      --line-alpha-mult: 1.24;
+    }
+
+    html { scroll-behavior: smooth; }
+    * { box-sizing: border-box; }
+
     body{
       min-height:100vh;
       margin:0;
-      color:#0f172a;
+      color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background:
-        radial-gradient(1200px 400px at 10% 10%, rgba(37,99,235,0.05), transparent 10%),
-        radial-gradient(900px 300px at 90% 80%, rgba(99,102,241,0.02), transparent 12%),
-        linear-gradient(180deg,#ffffff 0%, #f8fafc 40%, #eef6ff 100%);
       position:relative;
       overflow-x:hidden;
+      /* default (light) uses a soft radial + gradient wash */
+      background:
+        radial-gradient(1200px 400px at 10% 10%, rgba(37,99,235,0.06), transparent 10%),
+        radial-gradient(900px 300px at 90% 80%, rgba(99,102,241,0.03), transparent 12%),
+        linear-gradient(180deg,var(--bg-top) 0%, var(--bg-bottom) 40%, #eef6ff 100%);
+      transition: background .45s ease, color .25s ease;
     }
 
-    /* low-contrast texture */
-    body::after{
-      content:'';
+    /* in dark mode, use solid background color (no gradient) */
+    :root.dark-mode body {
+      background: var(--bg-top) !important;
+    }
+
+    /* interactive canvas background - very bottom */
+    #bgCanvas {
       position:fixed;
       inset:0;
-      z-index:0;
+      width:100%;
+      height:100%;
+      z-index:-20; /* bottom-most */
       pointer-events:none;
-      background-image:
-        repeating-radial-gradient(circle at 20% 10%, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 50px);
-      mix-blend-mode:soft-light;
-      opacity:0.9;
+      display:block;
+      filter: blur(0.6px) saturate(.95) contrast(.95);
+      opacity: 1;
+      transition: filter .35s ease, opacity .35s ease;
     }
 
-    /* faint diagonal overlay grid */
+    /* faint diagonal overlay grid (subtle, adjusted by --grid-opacity) */
     body::before{
       content:'';
       position:fixed;
       inset:0;
       pointer-events:none;
       background-image:
-        linear-gradient(135deg, rgba(255,255,255,0.02) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.02) 50%, rgba(0,0,0,0) 50%),
-        linear-gradient(135deg, rgba(255,255,255,0.01) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,0.01) 50%, rgba(0,0,0,0) 50%);
+        linear-gradient(135deg, rgba(255,255,255,var(--grid-opacity)) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,var(--grid-opacity)) 50%, rgba(0,0,0,0) 50%),
+        linear-gradient(135deg, rgba(255,255,255,calc(var(--grid-opacity) - 0.02)) 25%, rgba(0,0,0,0) 25%, rgba(255,255,255,calc(var(--grid-opacity) - 0.02)) 50%, rgba(0,0,0,0) 50%);
       background-size: 28px 28px, 56px 56px;
-      opacity: .45;
-      z-index:0;
+      opacity: .7;
+      z-index:-10;
+      mix-blend-mode: overlay;
     }
 
-    /* interactive nodes canvas sits behind all content */
-    #nodesCanvas { position: fixed; inset:0; z-index: -1; pointer-events:none; opacity:0.55; }
-
-    .blob{ position:absolute; border-radius:28px; filter: blur(36px); opacity:.12; transform-origin:center; z-index:0; pointer-events:none; }
+    .blob{ position:absolute; border-radius:28px; filter: blur(32px); opacity:.07; transform-origin:center; z-index:-11; pointer-events:none; }
     @keyframes floatA { 0%{transform:translateY(0)}50%{transform:translateY(-36px) translateX(8px)}100%{transform:translateY(0)}}
     @keyframes floatB { 0%{transform:translateY(0)}50%{transform:translateY(48px) translateX(-12px)}100%{transform:translateY(0)}}
     .blob.a{ animation: floatA 9s linear infinite; } .blob.b{ animation: floatB 11s linear infinite; }
 
     .content { position:relative; z-index:10; }
 
-    .reveal { opacity: 0; transform: translateY(10px); transition: all .48s cubic-bezier(.22,.9,.35,1); }
+    .reveal { opacity: 0; transform: translateY(10px); transition: all .55s cubic-bezier(.22,.9,.35,1); }
     .reveal.show { opacity: 1; transform: translateY(0); }
 
-    .img-card { background: linear-gradient(180deg, rgba(37,99,235,0.04), rgba(37,99,235,0.01)); border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; border:1px solid rgba(30,64,175,0.04); }
+    .img-card { background: linear-gradient(180deg, rgba(37,99,235,0.04), rgba(37,99,235,0.01)); border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; border:1px solid rgba(30,64,175,0.04); transition: transform .18s ease, box-shadow .18s ease, background .25s ease; }
+    .img-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(2,6,23,0.08); }
     .img-card img.thumb { width:100%; height:100%; display:block; object-fit:cover; }
 
-    .logo-square { width:160px; height:160px; flex:0 0 160px; display:flex; align-items:center; justify-content:center; background:white; border-radius:12px; border:1px solid rgba(14,165,233,0.06); overflow:hidden; }
+    .logo-square { width:160px; height:160px; flex:0 0 160px; display:flex; align-items:center; justify-content:center; background:var(--card); border-radius:12px; border:1px solid rgba(14,165,233,0.06); overflow:hidden; transition: background .25s ease, border-color .25s ease; }
     .logo-square img { width:100%; height:100%; object-fit:contain; padding:10px; display:block; }
 
     @media (max-width:640px){ .logo-square { width:120px; height:120px; flex:0 0 120px; } }
 
     .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:90; }
     .overlay.show { display:flex; }
-    .overlay-backdrop { position:absolute; inset:0; background:rgba(2,6,23,0.6); backdrop-filter: blur(4px); }
-    .zoom-panel { position:relative; width:min(94%,1100px); max-height:94vh; overflow:auto; border-radius:14px; background:var(--card); box-shadow: 0 20px 60px rgba(2,6,23,0.28); transform: translateY(10px) scale(.98); opacity:0; transition: transform .36s cubic-bezier(.2,.9,.3,1), opacity .26s ease; }
+    .overlay-backdrop { position:absolute; inset:0; background:rgba(2,6,23,0.6); backdrop-filter: blur(4px); transition: background .25s ease; }
+    .zoom-panel { position:relative; width:min(94%,1000px); max-height:94vh; overflow:auto; border-radius:14px; background:var(--card); color:var(--text); box-shadow: 0 20px 60px rgba(2,6,23,0.28); transform: translateY(10px) scale(.98); opacity:0; transition: transform .36s cubic-bezier(.2,.9,.3,1), opacity .26s ease, background .25s ease, color .25s ease; }
     .zoom-panel.show { transform: translateY(0) scale(1); opacity:1; }
     .zoom-img { width:100%; height:auto; max-height:78vh; object-fit:contain; display:block; border-radius:10px; background:linear-gradient(180deg,#eef2ff,#fff); }
 
     .pill-nav a{ border: 1px solid rgba(30,64,175,0.08); padding: .5rem .9rem; border-radius:9999px; color:var(--primary); background:transparent; font-weight:600; display:inline-block; }
     .pill-nav a:hover{ background:rgba(37,99,235,0.06); transform:translateY(-2px); transition:all .18s ease; }
 
-    .snapshot{ border-radius:12px; background: linear-gradient(180deg,#f8fbff,#eef6ff); min-height:160px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(30,64,175,0.06); overflow:hidden; }
-    .snapshot img { width:55%; height:55%; object-fit:cover; border-radius:10px; }
+    .snapshot{ border-radius:12px; background: linear-gradient(180deg,#f8fbff,#eef6ff); min-height:180px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(30,64,175,0.06); overflow:hidden; transition: background .25s ease, border-color .25s ease; }
+    .snapshot img { width:55%; height:55%; object-fit:cover; border-radius:10px; transition: transform .18s ease; }
+    .snapshot img:hover { transform: scale(.99); }
 
-    .experience-card { cursor:pointer; }
+    .experience-card { cursor:pointer; transition: transform .12s ease; }
+    .experience-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(2,6,23,0.06); }
     .experience-card:focus { outline: 3px solid rgba(37,99,235,0.12); }
 
-    .education-thumb { height:16rem; }
+    .education-thumb { height:14rem; }
 
-    /* reduce gap between prototype and contact - keep consistent spacing */
     #prototypes { margin-bottom:0; }
     footer#contact { margin-top:1rem; }
 
     .detail-wrap { display:flex; gap:20px; align-items:flex-start; }
     @media (max-width:900px){ .detail-wrap { flex-direction:column; } }
-    .detail-text { flex:1; color:#0f172a; }
-    .detail-text h3 { margin-top:0; margin-bottom:8px; font-size:20px; }
-    .detail-text .meta { color:#475569; margin-bottom:12px; }
+    .detail-text { flex:1; color:var(--text); }
+    .detail-text h3 { margin-top:0; margin-bottom:8px; font-size:1.25rem; }
+    .detail-text .meta { color:var(--muted); margin-bottom:12px; }
     .detail-scroll { max-height:74vh; overflow:auto; padding-right:6px; }
 
-    /* header action download anchor */
     #headerDownload { display:none; text-decoration:none; padding:.45rem .8rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:600; }
     #headerDownload.secondary { background:#94a3b8; color:#fff; }
 
-    /* slight increase to text size for readability */
     .detail-text,
     .detail-text ul li,
     .text-sm,
     .img-card .thumb,
-    .pill-nav a { font-size:15px !important; line-height:1.45; }
-
-    /* tightened zoom panel */
-    .zoom-panel { width: min(94%, 1000px); }
+    .pill-nav a {
+      font-size: 15px !important;
+      line-height: 1.45;
+    }
     .zoom-panel > div { padding: 12px !important; }
     #zoomContent { padding: 12px !important; min-height: 48vh !important; }
     .detail-text { max-width: 720px; }
     .detail-text ul { margin-top: 8px; padding-left: 18px; }
     .detail-text ul li { margin-bottom: 6px; }
 
-    /* DARK MODE */
-    body.dark { background: #071024; color: #e6eef8; }
-    body.dark .snapshot { background: #07182b; border-color: rgba(255,255,255,0.04); }
-    body.dark .logo-square { background: #081827; border-color: rgba(255,255,255,0.04); }
-    body.dark .zoom-panel { background: var(--card-dark); color: #e6eef8; }
-    body.dark .detail-text { color: #e6eef8; }
-    body.dark a { color: #9fc9ff; }
-    body.dark .img-card { border-color: rgba(255,255,255,0.03); }
+    @media (max-width:420px){
+      .detail-text, .text-sm { font-size:14.5px !important; }
+      .zoom-panel { width: 96% !important; }
+      #zoomContent { min-height: 42vh !important; }
+    }
 
-    /* Dark mode toggle */
-    #darkToggle { position: fixed; right: 18px; top: 18px; z-index: 120; background: rgba(255,255,255,0.06); padding:6px 10px; border-radius:9999px; display:flex; align-items:center; gap:8px; backdrop-filter: blur(4px); border:1px solid rgba(255,255,255,0.04); color:#fff; font-weight:600; }
-    body.dark #darkToggle { background: rgba(0,0,0,0.35); color:#fff; border-color: rgba(255,255,255,0.06); }
-    #darkToggle button { background:transparent; border:1px solid rgba(255,255,255,0.08); color:inherit; padding:6px 8px; border-radius:8px; cursor:pointer; }
+    /* Dark-mode UI overrides for clear contrast (kept transitions / animations) */
+    :root.dark-mode .bg-white {
+      background: var(--card) !important;
+      color: var(--text) !important;
+      border-color: rgba(255,255,255,0.04) !important;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.45) !important;
+    }
+    :root.dark-mode .text-slate-600 { color: #cbd7f0 !important; }
+    :root.dark-mode .text-slate-700 { color: #bfcfe8 !important; }
+    :root.dark-mode .text-slate-500 { color: #98abcf !important; }
+    :root.dark-mode .snapshot { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-color: rgba(255,255,255,0.03); }
+
+    :root.dark-mode .overlay-backdrop { background: rgba(1,2,6,0.8); }
+
+    /* Ensure zoom panel, zoom content and other special blocks match card color in dark mode */
+    :root.dark-mode .zoom-panel,
+    :root.dark-mode #zoomContent,
+    :root.dark-mode .img-card,
+    :root.dark-mode .logo-square,
+    :root.dark-mode section#education,
+    :root.dark-mode .snapshot,
+    :root.dark-mode .pill-nav a,
+    :root.dark-mode section#research,
+    :root.dark-mode .bg-white {
+      background: var(--card) !important;
+      border-color: rgba(255,255,255,0.04) !important;
+      color: var(--text) !important;
+    }
+
+    /* Dark-mode toggle button (top-right) */
+    #darkToggle {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 60;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+      border-radius: 9999px;
+      padding: 6px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(2,6,23,0.06);
+      cursor: pointer;
+      width:46px;
+      height:46px;
+      justify-content:center;
+      transition: transform .15s ease, background .25s ease, border-color .25s ease;
+    }
+    #darkToggle:hover { transform: translateY(-3px); }
+    :root.dark-mode #darkToggle {
+      background: linear-gradient(180deg, rgba(10,14,24,0.6), rgba(6,10,18,0.5));
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.22);
+    }
+    #darkToggle svg { width:20px; height:20px; display:block; }
+    #darkToggleLabel {
+      position: fixed;
+      right: 72px;
+      top: 22px;
+      z-index: 60;
+      font-size: 13px;
+      color: var(--muted);
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .14s ease, transform .14s ease;
+    }
+    #darkToggle:hover + #darkToggleLabel { opacity: 1; transform: translateY(0); pointer-events: none; }
+
   </style>
 </head>
 <body>
-  <!-- interactive nodes canvas (low-brightness, many connecting lines) -->
-  <canvas id="nodesCanvas" aria-hidden="true"></canvas>
+  <!-- interactive canvas background -->
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
-  <!-- dark mode switch -->
-  <div id="darkToggle" aria-hidden="false">
-    <span id="modeLabel">Dark mode</span>
-    <button id="toggleBtn" aria-pressed="false">Toggle</button>
-  </div>
+  <!-- dark mode toggle -->
+  <button id="darkToggle" aria-pressed="false" title="Toggle dark mode" aria-label="Toggle dark mode">
+    <svg id="darkIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)">
+      <circle cx="12" cy="12" r="4" fill="currentColor" style="color:var(--primary)"></circle>
+    </svg>
+  </button>
+  <div id="darkToggleLabel">Dark mode</div>
 
-  <!-- decorative blobs (subtle) -->
+  <!-- decorative blobs -->
   <div aria-hidden="true">
     <div class="blob a" style="left:-6%; top:-8%; width:680px; height:420px; background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(99,102,241,0.08));"></div>
     <div class="blob b" style="right:3%; top:8%; width:520px; height:360px; background: linear-gradient(135deg, rgba(96,165,250,0.14), rgba(99,102,241,0.04));"></div>
@@ -163,7 +260,7 @@
     <div class="content max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold">Edward Hong</h1>
-        <p class="text-sm text-slate-600">Nanotechnology Engineering student, prototyping & materials R&amp;D</p>
+        <p class="text-sm text-slate-600">Nanotechnology Engineering student, prototyping and materials R&amp;D</p>
       </div>
       <nav class="hidden md:flex gap-6 text-sm items-center">
         <a href="#prototypes" class="hover:underline">Project</a>
@@ -183,16 +280,16 @@
         <p class="mt-4 text-slate-600 max-w-xl">Hands-on materials R&amp;D, CAD prototyping, COMSOL and Python data pipelines. Comfortable across bench work (SEM, AFM, DSC), CAD, simulation, and Python automation.</p>
 
         <div class="mt-6 flex gap-3 items-center">
-          <a href="#prototypes" class="inline-flex items-center px-4 py-2 bg-[color:var(--primary)] text-white rounded-md">See prototype</a>
+          <a href="#prototypes" class="inline-flex items-center px-4 py-2 bg-[color:var(--primary)] text-white rounded-md">See project</a>
           <a href="mailto:e4hong@uwaterloo.ca" class="inline-flex items-center px-4 py-2 border border-slate-200 rounded-md">Email</a>
         </div>
 
         <div class="mt-4">
           <div class="pill-nav flex gap-3 items-center">
-            <a href="#education">Education</a>
-            <a href="#experience">Work Experience</a>
-            <a href="#prototypes">Prototype</a>
+            <a href="#prototypes">Project</a>
             <a href="#research">Research</a>
+            <a href="#experience">Work</a>
+            <a href="#education">Education</a>
           </div>
         </div>
       </div>
@@ -203,14 +300,14 @@
         </div>
 
         <div class="mt-4 flex gap-3 justify-start">
-          <a id="resumeLink" class="px-3 py-2 border rounded-md text-sm" href="./Edward%20Hong%20Resume%20-%202026.pdf" download>Resume (PDF)</a>
-          <a id="portfolioLink" class="px-3 py-2 border rounded-md text-sm" href="./Edward%20Hong%20Portfolio%20-%202026.pdf" download>Portfolio (PDF)</a>
+          <a id="resumeLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Resume%20-%202026.pdf">Resume (PDF)</a>
+          <a id="portfolioLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Portfolio%20-%202026.pdf">Portfolio (PDF)</a>
         </div>
       </div>
     </section>
 
-    <!-- PROTOTYPE (Project) -->
-    <section id="prototypes" class="mt-12">
+    <!-- PROJECT (top) -->
+    <section id="prototypes" class="mt-10">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Prototype: Optical Contact Angle Goniometer</h3>
         <p class="text-sm text-slate-600 mt-1">Hardware + automatic image processing</p>
@@ -222,7 +319,7 @@
           <p class="text-sm text-slate-600 mt-2">3D-printed mounts, low-cost imaging rig, and Python automation for sessile-drop contact angle measurement.</p>
 
           <ul class="mt-3 text-sm text-slate-600 list-disc list-inside">
-            <li>Design: 3D-printed mounts & fixtures</li>
+            <li>Design: 3D-printed mounts and fixtures</li>
             <li>Method: Sessile drop imaging + Python processing</li>
             <li>Constraint: Reproducible and low-cost</li>
           </ul>
@@ -240,42 +337,44 @@
       </div>
     </section>
 
-    <!-- RESEARCH (inserted between Prototypes and Work) - mirrored layout: image left, text right -->
-    <section id="research" class="mt-10">
-      <div class="mb-6 reveal">
-        <h3 class="text-2xl md:text-3xl font-semibold">Research</h3>
-        <p class="text-sm text-slate-600 mt-1">Shape-change programming of zwitterionic hydrogels</p>
+    <!-- RESEARCH (now BETWEEN prototype and work) - mirrored layout: image LEFT, text RIGHT -->
+    <section id="research" class="mt-10 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
+      <div class="mb-4">
+        <h3 class="text-2xl md:text-3xl font-semibold">Research Paper</h3>
+        <p class="text-sm text-slate-600 mt-1">Selected publications & experiments</p>
       </div>
 
-      <article class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open Research details">
-        <div class="grid md:grid-cols-2 gap-6 items-center">
-          <!-- left: picture preview -->
-          <div class="img-card h-56 img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
-            <img class="thumb" alt="Hydrogel demo" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
-          </div>
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open research details">
+          <div class="grid md:grid-cols-2 gap-6 items-center">
+            <!-- left: picture -->
+            <div class="img-card h-56 img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
+              <img class="thumb" alt="Hydrogel Demo" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
+            </div>
 
-          <!-- right: brief text -->
-          <div>
-            <div class="font-semibold text-lg">Shape-change programming of zwitterionic hydrogels</div>
-            <div class="text-sm text-slate-600 mt-2">Programmed bending & complex deformation through monomer separation using surface-energy patterning (DMAPS/MAA).</div>
-            <div class="text-sm text-slate-500 mt-3">Published Jan 12, 2026 — Journal of Materials Chemistry A</div>
-            <div class="mt-4 text-sm text-slate-600">
-              <ul class="list-disc list-inside">
-                <li>pH-responsive gradients produce rapid, deterministic bending.</li>
-                <li>Patterned substrates and self-healing enable complex 2D→3D transformations.</li>
-                <li>Characterization: SEM, EDX, rheology, fluorescence imaging, and COMSOL modeling.</li>
-              </ul>
+            <!-- right: brief text -->
+            <div>
+              <div class="font-semibold">Shape-change programming of zwitterionic hydrogels</div>
+              <div class="text-sm text-slate-600 mt-2">Programmed bending & complex deformation via surface-energy-directed chemical gradients.</div>
+              <div class="text-sm text-slate-500 mt-3">2025–2026 • University lab project</div>
+              <div class="mt-4 text-sm text-slate-600">
+                <ul class="list-disc list-inside">
+                  <li>Monomer migration (DMAPS/MAA) creates wetting/chemistry gradients.</li>
+                  <li>Rapid pH-triggered bending and programmable 2D→3D morphing.</li>
+                  <li>Characterized with SEM, EDX, fluorescence imaging and COMSOL modeling.</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
 
-    <!-- EXPERIENCE (Work) -->
+    <!-- WORK -->
     <section id="experience" class="mt-12">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Work Experience</h3>
-        <p class="text-sm text-slate-600 mt-1">Roles & impact</p>
+        <p class="text-sm text-slate-600 mt-1">Roles and impacts</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
@@ -319,7 +418,7 @@
 
             <div class="text-sm text-slate-600 space-y-2">
               <div>• Co-authored published research</div>
-              <div>• Synthesized and characterized hydrogels & nanocomposites</div>
+              <div>• Synthesized and characterized hydrogels and nanocomposites</div>
               <div>• Designed 3D-printed fixtures for experiments</div>
             </div>
           </div>
@@ -342,7 +441,7 @@
 
             <div class="text-sm text-slate-600 space-y-2">
               <div>• Built prototype AI/ML solutions on Azure</div>
-              <div>• Implemented data pipelines & earned Azure certifications</div>
+              <div>• Implemented data pipelines and earned Azure certifications</div>
             </div>
           </div>
         </article>
@@ -400,7 +499,7 @@
               <img class="thumb w-full h-auto" alt="SEM" src="./SEM.jpg" loading="lazy">
             </div>
 
-            <!-- SAED GIF Preview (still until clicked) -->
+            <!-- SAED GIF Preview (clickable, expands to play gif) -->
             <div class="img-card education-thumb img-placeholder img-gif-poster" data-title="SAED (real-time)" data-gif="./SAED%20gif.gif" role="button" tabindex="0" aria-label="Open SAED gif preview">
               <img class="thumb w-full h-auto" alt="SAED" src="./SAED%20gif.gif" loading="lazy">
             </div>
@@ -425,7 +524,6 @@
           <div class="ml-auto flex items-center gap-3">
             <button id="prevImgBtn" class="text-slate-600" aria-label="Previous" style="font-size:20px;display:inline-block">&lt;</button>
             <button id="nextImgBtn" class="text-slate-600" aria-label="Next" style="font-size:20px;display:inline-block">&gt;</button>
-            <!-- header download button for file previews -->
             <a id="headerDownload" href="#" class="" target="_blank" rel="noreferrer">Download</a>
             <button id="zoomClose" class="ml-2 text-slate-600" aria-label="Close preview">Close</button>
           </div>
@@ -455,401 +553,601 @@
     <div class="mt-8 text-center text-sm text-slate-500 reveal">2025-2026</div>
   </footer>
 
+  <!-- CANVAS SCRIPT: more interactive mouse influence + scheme aware -->
   <script>
-    /********** Node background - interactive, "give" but not converging **********/
-    (function(){
-      const canvas = document.getElementById('nodesCanvas');
-      const ctx = canvas.getContext('2d');
-      let w, h, nodes = [], mouse = {x: -9999, y: -9999};
+  (function(){
+    const canvas = document.getElementById('bgCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: true });
 
-      function resize(){ w = canvas.width = innerWidth; h = canvas.height = innerHeight; initNodes(); }
-      function rand(a,b){ return a + Math.random()*(b-a); }
+    let w = 0, h = 0, DPR = Math.max(1, window.devicePixelRatio || 1);
+    function resize() {
+      w = canvas.clientWidth || window.innerWidth;
+      h = canvas.clientHeight || window.innerHeight;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
 
-      function initNodes(){
-        // create nodes in a loose grid with small random offset; nodes keep near origin but move with mouse
-        nodes = [];
-        const cols = Math.round(Math.max(10, w/140));
-        const rows = Math.round(Math.max(6, h/140));
-        for(let i=0;i<cols;i++){
-          for(let j=0;j<rows;j++){
-            const x0 = (i+0.5)*w/cols + rand(-20,20);
-            const y0 = (j+0.5)*h/rows + rand(-20,20);
-            nodes.push({
-              x:x0, y:y0,
-              x0:x0, y0:y0,
-              vx:rand(-0.2,0.2), vy:rand(-0.2,0.2),
-              r: rand(1.5,2.8)
-            });
+    window.addEventListener('resize', function(){ resize(); initParticles(); }, { passive: true });
+    resize();
+
+    const AREA = Math.max(300000, w * h);
+    const BASE = Math.round(Math.min(120, Math.max(32, AREA / (1100*1100) * 84)));
+    const COUNT = Math.max(28, BASE);
+
+    const particles = [];
+    const mouse = { x: w/2, y: h/2, active:false, time:0 };
+
+    function rand(min, max){ return min + Math.random() * (max - min); }
+
+    function getNodeColorRGB() {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--node-color') || '99,102,241';
+      return v.trim();
+    }
+    function getAlphaMult() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-alpha-mult')) || 1;
+    }
+    function getLineAlphaMult() {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--line-alpha-mult')) || 1;
+    }
+
+    class NodeLocal {
+      constructor() {
+        const margin = 0.08;
+        this.x0 = rand(w * margin, w * (1 - margin));
+        this.y0 = rand(h * margin, h * (1 - margin));
+        this.x = this.x0 + rand(-10, 10);
+        this.y = this.y0 + rand(-10, 10);
+        this.vx = rand(-0.25, 0.25);
+        this.vy = rand(-0.25, 0.25);
+        this.r = rand(1.2, 3.0);
+        this.alpha = rand(0.06, 0.22);
+        this.maxDisp = rand(46, 110);
+      }
+
+      step(dt) {
+        const k = 0.010;
+        const dx = this.x0 - this.x;
+        const dy = this.y0 - this.y;
+        const noise = 0.09 * (Math.sin((this.x0 + this.y0) * 0.001 + performance.now()*0.00055));
+        this.vx += (dx * k + noise * (Math.random()-0.5));
+        this.vy += (dy * k + noise * (Math.random()-0.5));
+
+        if (mouse.active) {
+          const mx = this.x - mouse.x;
+          const my = this.y - mouse.y;
+          const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
+          const R = 220;
+          if (dist < R) {
+            const strength = (1 - (dist / R)) * 1.6;
+            this.vx += (mx / dist) * strength * 1.6;
+            this.vy += (my / dist) * strength * 1.6;
+          }
+        }
+
+        this.vx *= 0.90;
+        this.vy *= 0.90;
+
+        this.x += this.vx * (dt || 1);
+        this.y += this.vy * (dt || 1);
+
+        const ox = this.x - this.x0;
+        const oy = this.y - this.y0;
+        const od = Math.sqrt(ox*ox + oy*oy);
+        if (od > this.maxDisp) {
+          const back = (od - this.maxDisp) * 0.14;
+          this.vx -= (ox / od) * back;
+          this.vy -= (oy / od) * back;
+        }
+
+        if (this.x < -60) this.x = w + 60;
+        if (this.x > w + 60) this.x = -60;
+        if (this.y < -60) this.y = h + 60;
+        if (this.y > h + 60) this.y = -60;
+      }
+
+      draw(ctx, rgbStr, alphaMult) {
+        const colorBase = rgbStr || '99,102,241';
+        const alpha = Math.min(0.45, this.alpha * (alphaMult || 1));
+
+        const glowRadius = this.r * 5.6;
+        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius);
+        g.addColorStop(0, `rgba(${colorBase},${Math.min(0.44, alpha * 0.88)})`);
+        g.addColorStop(0.35, `rgba(${colorBase},${Math.max(0.04, alpha * 0.5)})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(this.x - glowRadius, this.y - glowRadius, glowRadius*2, glowRadius*2);
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${colorBase},${0.78})`;
+        ctx.globalAlpha = Math.min(0.86, alpha * 1.05);
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function initParticles(){
+      particles.length = 0;
+      for (let i=0;i<COUNT;i++) particles.push(new NodeLocal());
+    }
+    initParticles();
+
+    function computeNearestNeighbors(k) {
+      const neighbors = new Array(particles.length);
+      for (let i = 0; i < particles.length; i++) {
+        const arr = [];
+        const a = particles[i];
+        for (let j = 0; j < particles.length; j++) {
+          if (i === j) continue;
+          const b = particles[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          arr.push({ idx: j, d2: dx*dx + dy*dy });
+        }
+        arr.sort((p,q)=>p.d2 - q.d2);
+        neighbors[i] = arr.slice(0, k).map(x=>x.idx);
+      }
+      return neighbors;
+    }
+
+    let cachedNeighbors = null;
+    let neighborTicker = 0;
+
+    function drawConnections(rgbStr, lineAlphaMult) {
+      const TH = 160;
+      ctx.save();
+
+      neighborTicker++;
+      if (!cachedNeighbors || neighborTicker % 5 === 0) {
+        cachedNeighbors = computeNearestNeighbors(4);
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        const list = cachedNeighbors[i] || [];
+        for (let j = 0; j < list.length; j++) {
+          const b = particles[list[j]];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const alpha = Math.max(0, 0.20 * (1 - dist / (TH*1.1))) * (lineAlphaMult || 1);
+          if (alpha > 0.01) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(${rgbStr},${alpha})`;
+            ctx.lineWidth = 0.9;
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
           }
         }
       }
 
-      function step(){
-        ctx.clearRect(0,0,w,h);
-        // compute and draw links first (subtle)
-        for(let i=0;i<nodes.length;i++){
-          const a = nodes[i];
-          // move node slightly towards base position
-          const dx0 = a.x0 - a.x, dy0 = a.y0 - a.y;
-          a.vx += dx0*0.0008; a.vy += dy0*0.0008;
-          // mouse influence: stronger when near, but limited
-          const mdx = mouse.x - a.x, mdy = mouse.y - a.y;
-          const mdist = Math.sqrt(mdx*mdx + mdy*mdy) || 1;
-          const influence = Math.min(1, 260/mdist);
-          // make nodes move more with mouse — user requested "more interactive" — scale up influence
-          a.vx += (mdx / mdist) * 0.45 * influence;
-          a.vy += (mdy / mdist) * 0.45 * influence;
-          // friction
-          a.vx *= 0.92; a.vy *= 0.92;
-          a.x += a.vx; a.y += a.vy;
-        }
-
-        // draw connections (more lines, slightly brighter)
-        ctx.lineWidth = 1;
-        for(let i=0;i<nodes.length;i++){
-          for(let j=i+1;j<nodes.length;j++){
-            const A = nodes[i], B = nodes[j];
-            const dx = A.x - B.x, dy = A.y - B.y;
-            const d = Math.sqrt(dx*dx + dy*dy);
-            if (d < 160) {
-              const alpha = 0.13 * (1 - d/160); // visible but low brightness
-              ctx.strokeStyle = 'rgba(140,170,255,'+alpha+')';
+      const TH2 = 220;
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        for (let j = i+1; j < particles.length; j++) {
+          const b = particles[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d2 = dx*dx + dy*dy;
+          if (d2 < TH2*TH2) {
+            const dist = Math.sqrt(d2);
+            const alpha = Math.max(0, 0.10 * (1 - dist/TH2)) * (lineAlphaMult || 1);
+            if (alpha > 0.008) {
               ctx.beginPath();
-              ctx.moveTo(A.x, A.y);
-              ctx.lineTo(B.x, B.y);
+              ctx.strokeStyle = `rgba(${rgbStr},${alpha * 0.95})`;
+              ctx.lineWidth = 0.6 * Math.max(0.6, (1 - dist/TH2) + 0.25);
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
               ctx.stroke();
             }
           }
         }
-
-        // draw nodes
-        for(const n of nodes){
-          ctx.beginPath();
-          ctx.fillStyle = 'rgba(140,170,255,0.06)';
-          ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
-          ctx.fill();
-        }
-
-        requestAnimationFrame(step);
       }
 
-      addEventListener('mousemove', (e)=>{ mouse.x = e.clientX; mouse.y = e.clientY; });
-      addEventListener('mouseleave', ()=>{ mouse.x = -9999; mouse.y = -9999; });
-      addEventListener('resize', resize);
-      resize(); step();
-    })();
+      ctx.restore();
+    }
 
-    /********** Reveal Observer **********/
+    let raf = null;
+    let last = performance.now();
+    function loop(now){
+      const dt = Math.min(1.8, (now - last) / 16.66);
+      last = now;
+
+      ctx.clearRect(0,0,w,h);
+
+      const bg = ctx.createLinearGradient(0,0,0,h);
+      bg.addColorStop(0, 'rgba(255,255,255,0.02)');
+      bg.addColorStop(1, 'rgba(240,248,255,0.02)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,w,h);
+
+      for (let p of particles) p.step(dt);
+
+      const rgbStr = getNodeColorRGB();
+      const alphaMult = getAlphaMult();
+      const lineMult = getLineAlphaMult();
+
+      drawConnections(rgbStr, lineMult);
+      for (let p of particles) p.draw(ctx, rgbStr, alphaMult);
+
+      raf = requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousemove', function(e){
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+      mouse.active = true;
+      clearTimeout(mouse._t);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650);
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', function(e){
+      if (!e.touches || !e.touches[0]) return;
+      const t = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = t.clientX - rect.left;
+      mouse.y = t.clientY - rect.top;
+      mouse.active = true;
+      clearTimeout(mouse._t);
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650);
+    }, { passive: true });
+
+    function start(){
+      resize();
+      initParticles();
+      cachedNeighbors = null;
+      cancelAnimationFrame(raf);
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    }
+    window.addEventListener('load', start);
+    window.addEventListener('orientationchange', start);
+  })();
+  </script>
+
+  <!-- Main page scripts (overlays, galleries, details, dark toggle) -->
+  <script>
+    // reveal observer
     (function(){
       var els = document.querySelectorAll('.reveal');
       var obs = new IntersectionObserver(function(entries){
         entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('show'); obs.unobserve(e.target); }});
       }, { threshold: 0.12 });
       els.forEach(function(el){ obs.observe(el); });
-      // ensure initial on-load
-      window.addEventListener('load', function(){ document.querySelectorAll('.reveal').forEach(function(el){ var r = el.getBoundingClientRect(); if (r.top < window.innerHeight) el.classList.add('show'); }); });
     })();
 
-    /********** Overlay & gallery logic (keeps behavior from previous code) **********/
-    (function(){
-      var overlay = document.getElementById('overlay');
-      var zoomPanel = document.getElementById('zoomPanel');
-      var zoomContent = document.getElementById('zoomContent');
-      var zoomTitle = document.getElementById('zoomTitle');
-      var zoomSub = document.getElementById('zoomSub');
-      var zoomClose = document.getElementById('zoomClose');
-      var overlayBackdrop = document.getElementById('overlayBackdrop');
-      var prevBtn = document.getElementById('prevImgBtn');
-      var nextBtn = document.getElementById('nextImgBtn');
-      var headerDownload = document.getElementById('headerDownload');
+    // overlay controls & gallery logic (keeps behavior)
+    var overlay = document.getElementById('overlay');
+    var zoomPanel = document.getElementById('zoomPanel');
+    var zoomContent = document.getElementById('zoomContent');
+    var zoomTitle = document.getElementById('zoomTitle');
+    var zoomSub = document.getElementById('zoomSub');
+    var zoomClose = document.getElementById('zoomClose');
+    var overlayBackdrop = document.getElementById('overlayBackdrop');
+    var prevBtn = document.getElementById('prevImgBtn');
+    var nextBtn = document.getElementById('nextImgBtn');
+    var headerDownload = document.getElementById('headerDownload');
 
-      var gallery = []; var galleryIndex = 0;
+    var gallery = [];
+    var galleryIndex = 0;
 
-      // detailsMap contains text for experience, education, and research (research entry added)
-      var detailsMap = {
-        "h2nano": {
-          "title": "Material Science Specialist",
-          "subtitle": "H2nano",
-          "date": "09/2024 – 04/2025 • Kitchener, ON",
-          "items": [
-            "Lead a project on synthesizing hydrophilic coatings on photocatalysts",
-            "Compiled and analyzed data, reviews and project plans for weekly meetings",
-            "Designed and printed 3D CAD models for instrumentation (contact angle goniometer)",
-            "Conducted multiple material characterizations (UV-Vis, SEM, FTIR, COD)",
-            "Processed weather data through collaborative Python projects"
-          ]
-        },
-        "smartlab": {
-          "title": "Lab Assistant",
-          "subtitle": "SMART - Lab, University of Waterloo",
-          "date": "01/2024 – 04/2024 • Waterloo, ON",
-          "items": [
-            "Co-authored published research papers",
-            "Participated in projects creating hydrogels for soft body robotics",
-            "Synthesized and characterized hydrogels with nanocomposites",
-            "Designed and printed 3D CAD fixtures",
-            "Shape-change programming via chemistry gradients"
-          ]
-        },
-        "avanade": {
-          "title": "Concept Designer (Azure Engineering)",
-          "subtitle": "Avanade",
-          "date": "06/2023 – 08/2023 • Hamilton, ON (Remote)",
-          "items": [
-            "Created prototype AI solutions using Azure services to help prevent financial frauds against older adults",
-            "Learned and assessed AZ-900 and AI-900",
-            "Applied Azure Cloud Services and ML techniques"
-          ]
-        },
-        "amazon": {
-          "title": "Warehouse Associate",
-          "subtitle": "Amazon",
-          "date": "06/2022 – 09/2022 • Hamilton, ON",
-          "items": [
-            "Collaborated to store, organize and deliver items",
-            "Maintained throughput of 150+ items/hour"
-          ]
-        },
-        "education-full": {
-          "title": "Honours Nanotechnology Engineering",
-          "subtitle": "University of Waterloo",
-          "date": "09/2022 – Present • Waterloo, ON",
-          "items": [
-            "Conducted lab work: DSC, TGA, AFM, SEM; characterized mechanical and thermal properties",
-            "Synthesized nanoparticles and performed photonics & COMSOL simulations",
-            "Familiar with PVD, lithography, and fundamental nanoelectronics"
-          ]
-        },
-        "research": {
-          "title": "Shape-change programming of zwitterionic hydrogels",
-          "subtitle": "Journal of Materials Chemistry A — Shahsavan et al.",
-          "date": "Published Jan 12, 2026",
-          "items": [
-            "Introduces chemical-gradient-based programming of hydrogels using surface-energy directed monomer migration (DMAPS & MAA).",
-            "Demonstrates rapid, pH-triggered bending and programmable S/M/coil deformations via substrate patterning.",
-            "Characterization: EDX/SEM, fluorescence imaging, rheology; modeling via COMSOL.",
-            "Potential applications: soft robotics and small-scale actuators with pH-triggered actuation."
-          ]
-        }
-      };
+    // details for overlays (education & experience & research)
+    var detailsMap = {
+      "h2nano": {
+        "title": "Material Science Specialist",
+        "subtitle": "H2nano",
+        "date": "09/2024 – 04/2025 • Kitchener, ON",
+        "items": [
+          "Lead a project on synthesizing hydrophilic coatings on photocatalysts",
+          "Compiled and analyzed data, reviews and project plans for weekly meetings",
+          "Designed and printed 3D CAD models for instrumentation (contact angle goniometer)",
+          "Conducted multiple material characterizations through numerous methods (UV-Vis, SEM, FTIR, COD) for semiconductors and nanoparticles",
+          "Processed weather data through collaborative Python projects"
+        ]
+      },
+      "smartlab": {
+        "title": "Lab Assistant",
+        "subtitle": "SMART - Lab, University of Waterloo",
+        "date": "01/2024 – 04/2024 • Waterloo, ON",
+        "items": [
+          "Co-authored published research papers",
+          "Participated in projects creating hydrogels for soft body robotics",
+          "Synthesized and characterized hydrogels with nanocomposites (Crystal Nanocellulose, Iron Oxide nanoparticles)",
+          "Designed and printed 3D CAD models for extrusion & DLP 3D printing",
+          "Shape-change programming of hydrogels via chemistry gradients",
+          "Debriefed projects in conference meetings to ensure intercommunication",
+          "Took stock of chemicals and created product comparison charts"
+        ]
+      },
+      "avanade": {
+        "title": "Concept Designer (Azure Engineering)",
+        "subtitle": "Avanade",
+        "date": "06/2023 – 08/2023 • Hamilton, ON (Remote)",
+        "items": [
+          "Created prototype AI solutions using Azure services to help prevent financial frauds against older adults",
+          "Learned and assessed AZ-900 and AI-900 through exams",
+          "Gained deep understanding of Azure Cloud Services, Machine Learning, and AI"
+        ]
+      },
+      "amazon": {
+        "title": "Warehouse Associate",
+        "subtitle": "Amazon",
+        "date": "06/2022 – 09/2022 • Hamilton, ON",
+        "items": [
+          "Collaborated to store, organize and deliver items to residents and other warehouses",
+          "Practiced time management and spatial cognition to stock 150+ items/hour"
+        ]
+      },
+      "education-full": {
+        "title": "Honours Nanotechnology Engineering",
+        "subtitle": "University of Waterloo",
+        "date": "09/2022 – Present • Waterloo, ON",
+        "items": [
+          "Wrote technical lab reports on effects of nanofillers on nanocomposites' mechanical and thermal properties",
+          "Conducted impact and tensile tests, Differential Scanning Calorimetry (DSC), Thermogravimetric Analysis (TGA), and Atomic Force Microscopy (AFM); isolated target products from solutions",
+          "Synthesized nano silver particles to determine effectiveness against elimination of micro-organisms",
+          "Knowledge of circuits and electromagnetism concepts; COMSOL simulation; oscilloscope, soldering, circuit building",
+          "Characterized materials through variety of instrumental methods including SEM",
+          "Synthesized silicon wafers through PVD and Lithography to perform Ellipsometry; acquainted with MOSFETs and fundamentals of nanoelectronics; hands-on photonics labs"
+        ]
+      },
+      "research": {
+        "title": "Shape-change programming of zwitterionic hydrogels",
+        "subtitle": "Surface-energy directed chemical gradients — DMAPS/MAA method",
+        "date": "Published 2026",
+        "items": [
+          "Chemical-gradient programming via monomer migration yields deterministic bending and complex shape transformations.",
+          "pH-triggered actuation enables rapid bending responses suitable for small soft-robotic actuators.",
+          "Characterized by SEM/EDX, fluorescence imaging, rheology, and modeled using COMSOL.",
+          "Demonstrated patterned substrates enabling spatially-controlled swelling and folding."
+        ],
+        "long_description": "This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations. The work includes imaging, compositional analysis, and COMSOL modeling to support the mechanism and potential soft-robotics applications."
+      }
+    };
 
-      // openOverlay handles arrays (gallery), string (image/gif/video), Node, and special opts.filePreview
-      function openOverlay(title, content, opts) {
-        opts = opts || {};
-        zoomTitle.textContent = title || 'Preview';
-        zoomSub.textContent = 'Click outside or press Esc to close';
-        zoomContent.innerHTML = '';
-        gallery = []; galleryIndex = 0;
+    // open overlay
+    function openOverlay(title, content, opts) {
+      opts = opts || {};
+      zoomTitle.textContent = title || 'Preview';
+      zoomSub.textContent = 'Click outside or press Esc to close';
+      zoomContent.innerHTML = '';
+      gallery = [];
+      galleryIndex = 0;
 
-        headerDownload.style.display = 'none';
-        headerDownload.href = '#';
-        headerDownload.removeAttribute('download');
+      // hide headerDownload by default
+      headerDownload.style.display = 'none';
+      headerDownload.href = '#';
+      headerDownload.removeAttribute('download');
 
-        if (Array.isArray(content)) {
-          gallery = content.slice();
-          renderGalleryImage(0);
-        } else if (typeof content === 'string') {
-          if (opts.filePreview) {
-            renderFilePreview(content, opts);
-          } else {
-            renderSingle(content);
-          }
-        } else if (content instanceof Node) {
-          prevBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
-          zoomContent.appendChild(content);
+      if (Array.isArray(content)) {
+        gallery = content.slice();
+        renderGalleryImage(0);
+      } else if (typeof content === 'string') {
+        if (opts.filePreview) {
+          // file preview: show iframe and header download
+          renderFilePreview(content, opts);
         } else {
-          zoomContent.innerHTML = '<div style="padding:24px">No preview available</div>';
-          prevBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
+          renderSingle(content);
         }
-
-        overlay.classList.add('show');
-        setTimeout(function(){ zoomPanel.classList.add('show'); }, 10);
-        document.body.style.overflow = 'hidden';
+      } else if (content instanceof Node) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        zoomContent.appendChild(content);
+      } else {
+        zoomContent.innerHTML = '<div style="padding:24px">No preview available</div>';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
       }
 
-      function renderSingle(url){
-        prevBtn.style.display = 'none'; nextBtn.style.display = 'none';
+      overlay.classList.add('show');
+      setTimeout(function(){ zoomPanel.classList.add('show'); }, 10);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderSingle(url) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      zoomContent.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.className = 'zoom-img';
+      img.alt = zoomTitle.textContent || 'Preview';
+      zoomContent.appendChild(img);
+    }
+
+    function renderGalleryImage(index) {
+      if (!gallery || gallery.length === 0) return;
+      prevBtn.style.display = gallery.length > 1 ? 'inline-block' : 'none';
+      nextBtn.style.display = gallery.length > 1 ? 'inline-block' : 'none';
+
+      var item = gallery[index];
+      var url = (item && item.src) ? item.src : item;
+      var title = (item && item.title) ? item.title : zoomTitle.textContent || '';
+      zoomTitle.textContent = title;
+
+      zoomContent.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.className = 'zoom-img';
+      img.alt = title;
+      zoomContent.appendChild(img);
+    }
+
+    // render file preview (iframe) and set header download
+    function renderFilePreview(fileUrl, opts) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      zoomContent.innerHTML = '';
+
+      // larger embed area
+      var wrapper = document.createElement('div');
+      wrapper.style.width = '100%';
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.gap = '12px';
+
+      var embed = document.createElement('iframe');
+      embed.src = fileUrl;
+      embed.style.width = '100%';
+      embed.style.height = '78vh'; // expanded preview area
+      embed.style.border = '0';
+      wrapper.appendChild(embed);
+
+      zoomContent.appendChild(wrapper);
+
+      // configure header download button
+      headerDownload.href = fileUrl;
+      if (opts.fileName) headerDownload.setAttribute('download', opts.fileName);
+      headerDownload.style.display = 'inline-block';
+    }
+
+    function closeOverlay() {
+      zoomPanel.classList.remove('show');
+      setTimeout(function(){
+        overlay.classList.remove('show');
         zoomContent.innerHTML = '';
-        var img = document.createElement('img');
-        img.src = url; img.className = 'zoom-img'; img.alt = zoomTitle.textContent || 'Preview';
-        zoomContent.appendChild(img);
+        gallery = [];
+        galleryIndex = 0;
+        document.body.style.overflow = '';
+        prevBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        headerDownload.style.display = 'none';
+      }, 260);
+    }
+
+    // event listeners
+    zoomClose.addEventListener('click', closeOverlay);
+    overlayBackdrop.addEventListener('click', closeOverlay);
+    window.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeOverlay();
+      if (e.key === 'ArrowLeft' && gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }
+      if (e.key === 'ArrowRight' && gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }
+    });
+    prevBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }});
+    nextBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }});
+
+    // make poster from GIF first frame (best-effort)
+    async function makeGifPoster(gifUrl) {
+      try {
+        var resp = await fetch(gifUrl);
+        var blob = await resp.blob();
+        var bitmap = await createImageBitmap(blob);
+        var canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        return canvas.toDataURL('image/png');
+      } catch (err) {
+        console.warn('makeGifPoster failed', err);
+        return gifUrl;
       }
+    }
 
-      function renderGalleryImage(index){
-        if(!gallery || gallery.length===0) return;
-        prevBtn.style.display = gallery.length>1 ? 'inline-block':'none';
-        nextBtn.style.display = gallery.length>1 ? 'inline-block':'none';
-        var item = gallery[index]; var url = (item && item.src)? item.src: item;
-        var title = (item && item.title) ? item.title : zoomTitle.textContent || '';
-        zoomTitle.textContent = title;
-        zoomContent.innerHTML = '';
-        var img = document.createElement('img');
-        img.src = url; img.className = 'zoom-img'; img.alt = title;
-        zoomContent.appendChild(img);
-      }
-
-      function renderFilePreview(fileUrl, opts) {
-        prevBtn.style.display = 'none'; nextBtn.style.display = 'none';
-        zoomContent.innerHTML = '';
-        var wrapper = document.createElement('div');
-        wrapper.style.width='100%'; wrapper.style.display='flex'; wrapper.style.flexDirection='column'; wrapper.style.gap='12px';
-        var embed = document.createElement('iframe');
-        embed.src = fileUrl; embed.style.width='100%'; embed.style.height='78vh'; embed.style.border='0';
-        wrapper.appendChild(embed); zoomContent.appendChild(wrapper);
-        headerDownload.href = fileUrl;
-        if (opts.fileName) headerDownload.setAttribute('download', opts.fileName);
-        headerDownload.style.display = 'inline-block';
-      }
-
-      function closeOverlay(){
-        zoomPanel.classList.remove('show');
-        setTimeout(function(){
-          overlay.classList.remove('show');
-          zoomContent.innerHTML = '';
-          gallery = []; galleryIndex = 0;
-          document.body.style.overflow = '';
-          prevBtn.style.display = 'inline-block';
-          nextBtn.style.display = 'inline-block';
-          headerDownload.style.display = 'none';
-          // restore zoomSub default
-          zoomSub.textContent = 'Click outside or press Esc to close';
-        }, 260);
-      }
-
-      // events
-      zoomClose.addEventListener('click', closeOverlay);
-      overlayBackdrop.addEventListener('click', closeOverlay);
-      window.addEventListener('keydown', function(e){
-        if (e.key === 'Escape') closeOverlay();
-        if (e.key === 'ArrowLeft' && gallery.length>1){ galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }
-        if (e.key === 'ArrowRight' && gallery.length>1){ galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }
-      });
-      prevBtn.addEventListener('click', function(){ if (gallery.length>1){ galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }});
-      nextBtn.addEventListener('click', function(){ if (gallery.length>1){ galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }});
-
-      // create still poster frame for gif (best-effort)
-      async function makeGifPoster(gifUrl){
-        try {
-          var resp = await fetch(gifUrl);
-          var blob = await resp.blob();
-          var bitmap = await createImageBitmap(blob);
-          var canvas = document.createElement('canvas');
-          canvas.width = bitmap.width; canvas.height = bitmap.height;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(bitmap,0,0);
-          return canvas.toDataURL('image/png');
-        } catch(err){ console.warn('makeGifPoster failed',err); return gifUrl; }
-      }
-
-      // DOM ready
-      document.addEventListener('DOMContentLoaded', function(){
-        // set GIF posters
-        var gifEls = document.querySelectorAll('.img-gif-poster');
-        gifEls.forEach(function(el){
-          var gif = el.dataset.gif;
-          var img = el.querySelector('img');
-          if (gif && img) {
-            makeGifPoster(gif).then(function(poster){ if (poster) img.src = poster; }).catch(function(){});
-          }
-        });
-
-        // initial reveal
-        document.querySelectorAll('.reveal').forEach(function(el){ var rect = el.getBoundingClientRect(); if (rect.top < window.innerHeight) el.classList.add('show'); });
-      });
-
-      // thumbnail / gallery clicks
-      document.querySelectorAll('.img-placeholder').forEach(function(el){
-        el.addEventListener('click', function(ev){
-          ev.stopPropagation();
-
-          // prototype gallery
-          if (el.classList.contains('img-gallery') && el.dataset.images) {
-            try {
-              var items = JSON.parse(el.dataset.images);
-              var prepared = items.map(function(it){ return (typeof it === 'string') ? { src: it, title: '' } : { src: it.src, title: it.title || '' }; });
-              openOverlay(el.dataset.title || 'Preview', prepared); return;
-            } catch(err){}
-          }
-
-          // gif poster: clicking should play gif in overlay instead of still
-          if (el.classList.contains('img-gif-poster') && el.dataset.gif) {
-            // open overlay and play gif
-            openOverlay(el.dataset.title || 'Preview', el.dataset.gif); return;
-          }
-
-          // default image click
-          var img = el.querySelector('img');
-          if (img) { openOverlay(el.dataset.title || 'Preview', img.src); return; }
-
-          // fallback: svg
-          var svg = el.querySelector('svg');
-          if (svg) {
-            var clone = svg.cloneNode(true); clone.setAttribute('width','100%'); clone.setAttribute('height','auto');
-            var wrap = document.createElement('div'); wrap.style.width='100%'; wrap.style.display='flex'; wrap.style.justifyContent='center'; wrap.appendChild(clone);
-            openOverlay(el.dataset.title || 'Preview', wrap); return;
-          }
-
-          openOverlay(el.dataset.title || 'Preview', '<div style="padding:24px">No preview available</div>');
-        });
-        el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
-      });
-
-      // build detail overlay (special-case research to include image+video)
-      function buildDetailOverlay(detailKey, logoSrc, showLogo) {
-        var info = detailsMap[detailKey];
-        if (!info) return null;
-        var wrapper = document.createElement('div');
-        wrapper.className = 'detail-wrap';
-
-        // Research: create left column with image + video stacked/side-by-side
-        if (detailKey === 'research') {
-          var left = document.createElement('div');
-          left.style.flex = '0 0 360px';
-          left.style.display = 'flex';
-          left.style.flexDirection = 'column';
-          left.style.gap = '10px';
-
-          var img = document.createElement('img');
-          img.src = './Hydrogel%20Demo%20Pic.jpg';
-          img.alt = 'Hydrogel Demo Pic';
-          img.style.width = '100%';
-          img.style.borderRadius = '10px';
-          img.style.objectFit = 'cover';
-          left.appendChild(img);
-
-          var vid = document.createElement('video');
-          vid.src = './Hydrogel%20Demo%20Vid.mp4';
-          vid.controls = true;
-          vid.style.width = '100%';
-          vid.style.borderRadius = '10px';
-          left.appendChild(vid);
-
-          wrapper.appendChild(left);
-        } else if (showLogo) {
-          var left = document.createElement('div');
-          left.style.flex = '0 0 auto';
-          left.style.display = 'flex';
-          left.style.alignItems = 'center';
-          left.style.justifyContent = 'center';
-          left.style.marginRight = '16px';
-          var logoBox = document.createElement('div');
-          logoBox.className = 'logo-square';
-          if (logoSrc) {
-            var img = document.createElement('img'); img.src = logoSrc; img.alt = 'Logo'; logoBox.appendChild(img);
-          } else {
-            logoBox.innerHTML = '<div style="width:60%;height:60%;background:#eef2ff;border-radius:8px"></div>';
-          }
-          left.appendChild(logoBox); wrapper.appendChild(left);
+    // DOM ready
+    document.addEventListener('DOMContentLoaded', function(){
+      // set GIF posters
+      var gifEls = document.querySelectorAll('.img-gif-poster');
+      gifEls.forEach(function(el){
+        var gif = el.dataset.gif;
+        var img = el.querySelector('img');
+        if (gif && img) {
+          makeGifPoster(gif).then(function(poster){
+            if (poster) img.src = poster;
+          }).catch(function(){ /* fallback: gif remains */ });
         }
+      });
 
-        // right: text only
+      // initial reveal
+      document.querySelectorAll('.reveal').forEach(function(el){
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) el.classList.add('show');
+      });
+    });
+
+    // thumbnail / gallery clicks (logos are not .img-placeholder)
+    document.querySelectorAll('.img-placeholder').forEach(function(el){
+      el.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if (el.classList.contains('img-gallery') && el.dataset.images) {
+          try {
+            var items = JSON.parse(el.dataset.images);
+            var prepared = items.map(function(it){ return (typeof it === 'string') ? { src: it, title: '' } : { src: it.src, title: it.title || '' }; });
+            openOverlay(el.dataset.title || 'Preview', prepared);
+            return;
+          } catch (err) { /* fallback below */ }
+        }
+        if (el.classList.contains('img-gif-poster') && el.dataset.gif) {
+          // play gif in overlay
+          openOverlay(el.dataset.title || 'Preview', el.dataset.gif);
+          return;
+        }
+        var img = el.querySelector('img');
+        if (img) {
+          openOverlay(el.dataset.title || 'Preview', img.src);
+          return;
+        }
+        var svg = el.querySelector('svg');
+        if (svg) {
+          var clone = svg.cloneNode(true);
+          clone.setAttribute('width','100%');
+          clone.setAttribute('height','auto');
+          var wrap = document.createElement('div');
+          wrap.style.width = '100%';
+          wrap.style.display = 'flex';
+          wrap.style.justifyContent = 'center';
+          wrap.appendChild(clone);
+          openOverlay(el.dataset.title || 'Preview', wrap);
+          return;
+        }
+        openOverlay(el.dataset.title || 'Preview', '<div style="padding:24px">No preview available</div>');
+      });
+      el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
+    });
+
+    // build detail overlay (logo optional) — special-case 'research' to include video + image
+    function buildDetailOverlay(detailKey, logoSrc, showLogo) {
+      var info = detailsMap[detailKey];
+      if (!info) return null;
+      var wrapper = document.createElement('div');
+      wrapper.className = 'detail-wrap';
+
+      // Research special layout: left = image + video stack, right = text
+      if (detailKey === 'research') {
+        var left = document.createElement('div');
+        left.style.flex = '0 0 420px';
+        left.style.maxWidth = '420px';
+        left.style.display = 'flex';
+        left.style.flexDirection = 'column';
+        left.style.gap = '10px';
+
+        var img = document.createElement('img');
+        img.src = './Hydrogel%20Demo%20Pic.jpg';
+        img.alt = 'Hydrogel Demo Pic';
+        img.style.width = '100%';
+        img.style.borderRadius = '10px';
+        img.style.objectFit = 'cover';
+        left.appendChild(img);
+
+        var vid = document.createElement('video');
+        vid.controls = true;
+        vid.playsInline = true;
+        vid.style.width = '100%';
+        vid.style.borderRadius = '10px';
+        vid.style.maxHeight = '48vh';
+        vid.src = './Hydrogel%20Demo%20Vid.mp4';
+        left.appendChild(vid);
+
+        wrapper.appendChild(left);
+
         var right = document.createElement('div');
         right.className = 'detail-text detail-scroll';
         var inner = '<h3>' + info.title + '</h3>';
         if (info.subtitle) inner += '<div class="text-sm text-slate-600" style="margin-bottom:6px;">' + info.subtitle + '</div>';
-        inner += '<div class="meta">' + info.date + '</div><ul style="margin-top:8px;">';
+        inner += '<div class="meta">' + info.date + '</div>';
+        if (info.long_description) inner += '<p style="margin-bottom:10px;">' + info.long_description + '</p>';
+        inner += '<ul style="margin-top:8px;">';
         info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
         inner += '</ul>';
         right.innerHTML = inner;
@@ -858,89 +1156,160 @@
         return wrapper;
       }
 
-      // attach click handlers for experience and education cards (and research - uses same class)
-      document.querySelectorAll('.experience-card').forEach(function(card){
-        card.addEventListener('click', function(){
-          var key = card.dataset.fullId;
-          var logoImg = card.querySelector('.logo-square img') || card.querySelector('img');
-          var logoSrc = logoImg ? logoImg.src : null;
-          var showLogo = key !== 'education-full' && key !== 'research';
-          var node = buildDetailOverlay(key, logoSrc, showLogo);
-          if (node) {
-            var infoForHeader = detailsMap[key];
-            var headerTitle = infoForHeader ? infoForHeader.title : '';
-            openOverlay(headerTitle, node);
-            if (infoForHeader) {
-              // subtitle + date shown under header title
-              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
-            }
-            // If research, also show download button linking to full paper (if you have it in repo)
+      // left: logo (only for work experience; education passes showLogo=false)
+      if (showLogo) {
+        var left = document.createElement('div');
+        left.style.flex = '0 0 auto';
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        left.style.justifyContent = 'center';
+        left.style.marginRight = '16px';
+        var logoBox = document.createElement('div');
+        logoBox.className = 'logo-square';
+        if (logoSrc) {
+          var img = document.createElement('img');
+          img.src = logoSrc;
+          img.alt = 'Logo';
+          logoBox.appendChild(img);
+        } else {
+          logoBox.innerHTML = '<div style="width:60%;height:60%;background:#eef2ff;border-radius:8px"></div>';
+        }
+        left.appendChild(logoBox);
+        wrapper.appendChild(left);
+      }
+
+      // right: text only
+      var right = document.createElement('div');
+      right.className = 'detail-text detail-scroll';
+      var inner = '<h3>' + info.title + '</h3>';
+      if (info.subtitle) inner += '<div class="text-sm text-slate-600" style="margin-bottom:6px;">' + info.subtitle + '</div>';
+      inner += '<div class="meta">' + info.date + '</div><ul style="margin-top:8px;">';
+      info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
+      inner += '</ul>';
+      right.innerHTML = inner;
+      wrapper.appendChild(right);
+
+      return wrapper;
+    }
+
+    // attach click handlers for experience, education and research cards
+    document.querySelectorAll('.experience-card, section#research .experience-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var key = card.dataset.fullId;
+        // find logo if available (but for education we will not show the logo)
+        var logoImg = card.querySelector('.logo-square img') || card.querySelector('img');
+        var logoSrc = logoImg ? logoImg.src : null;
+
+        // if education -> only show text (showLogo false)
+        var showLogo = key !== 'education-full' && key !== 'research';
+        var node = buildDetailOverlay(key, logoSrc, showLogo);
+        if (node) {
+          var infoForHeader = detailsMap[key];
+          var headerTitle = infoForHeader ? infoForHeader.title : '';
+          openOverlay(headerTitle, node);
+
+          if (infoForHeader) {
             if (key === 'research') {
+              // research uses long subtitle/date in zoomSub
+              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
+              // Enable headerDownload for research paper if present in repo
               headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
               headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
               headerDownload.style.display = 'inline-block';
+            } else {
+              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
             }
           }
-        });
-        card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
+        }
       });
+      card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
+    });
 
-      // prototype gallery click (already wired earlier, but keep)
-      document.querySelectorAll('.img-gallery').forEach(function(el){
-        el.addEventListener('click', function(ev){
-          ev.stopPropagation();
-          try {
-            var items = JSON.parse(el.dataset.images);
-            var prepared = items.map(function(it){ return (typeof it==='string')? {src:it,title:''}: {src:it.src,title:it.title||''}; });
-            openOverlay(el.dataset.title || 'Preview', prepared);
-          } catch (err) {
-            var img = el.querySelector('img.thumb');
-            if (img) openOverlay(el.dataset.title || 'Preview', img.src);
-          }
-        });
-        el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
+    // prototype gallery click
+    document.querySelectorAll('.img-gallery').forEach(function(el){
+      el.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        try {
+          var items = JSON.parse(el.dataset.images);
+          var prepared = items.map(function(it){ return (typeof it==='string')? {src:it,title:''}: {src:it.src,title:it.title||''}; });
+          openOverlay(el.dataset.title || 'Preview', prepared);
+        } catch (err) {
+          var img = el.querySelector('img.thumb');
+          if (img) openOverlay(el.dataset.title || 'Preview', img.src);
+        }
       });
+      el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
+    });
 
-      // resume & portfolio preview handlers (header download shown)
-      var resumeLink = document.getElementById('resumeLink');
-      var portfolioLink = document.getElementById('portfolioLink');
-      if (resumeLink) {
-        resumeLink.addEventListener('click', function(e){
-          e.preventDefault();
-          var url = resumeLink.getAttribute('href');
-          openOverlay('Resume — Preview', url, { filePreview: true, fileName: 'Edward Hong Resume - 2026.pdf' });
-        });
-      }
-      if (portfolioLink) {
-        portfolioLink.addEventListener('click', function(e){
-          e.preventDefault();
-          var url = portfolioLink.getAttribute('href');
-          openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2026.pdf' });
-        });
-      }
-    })();
-
-    /********** SAED gif poster: ensure still until clicked (handled above) **********/
-
-    /********** Dark mode toggle **********/
-    (function(){
-      var toggle = document.getElementById('toggleBtn');
-      var modeLabel = document.getElementById('modeLabel');
-      // default: light (so label shows "Dark mode")
-      function setDark(on){
-        if(on){ document.body.classList.add('dark'); modeLabel.textContent = 'Light mode'; toggle.setAttribute('aria-pressed','true'); }
-        else { document.body.classList.remove('dark'); modeLabel.textContent = 'Dark mode'; toggle.setAttribute('aria-pressed','false'); }
-      }
-      // read saved preference
-      var saved = localStorage.getItem('ed_dark_mode');
-      if (saved === '1') setDark(true);
-      else setDark(false);
-      toggle.addEventListener('click', function(){
-        var isDark = document.body.classList.contains('dark');
-        setDark(!isDark);
-        localStorage.setItem('ed_dark_mode', !isDark ? '1' : '0');
+    // resume & portfolio preview handlers (header download shown, bottom close removed) - filenames updated to 2026
+    var resumeLink = document.getElementById('resumeLink');
+    var portfolioLink = document.getElementById('portfolioLink');
+    if (resumeLink) {
+      resumeLink.addEventListener('click', function(e){
+        e.preventDefault();
+        var url = resumeLink.getAttribute('href');
+        openOverlay('Resume — Preview', url, { filePreview: true, fileName: 'Edward Hong Resume - 2026.pdf' });
       });
-    })();
+    }
+    if (portfolioLink) {
+      portfolioLink.addEventListener('click', function(e){
+        e.preventDefault();
+        var url = portfolioLink.getAttribute('href');
+        openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2026.pdf' });
+      });
+    }
+
+    // =========================
+    // Dark mode toggle behavior
+    // =========================
+    const toggle = document.getElementById('darkToggle');
+    const toggleLabel = document.getElementById('darkToggleLabel');
+    const darkIcon = document.getElementById('darkIcon');
+    const ROOT = document.documentElement;
+
+    function renderToggleIcon(isDark) {
+      if (!darkIcon) return;
+      if (isDark) {
+        darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
+        darkIcon.style.color = 'var(--primary)';
+        toggle.setAttribute('aria-pressed','true');
+      } else {
+        darkIcon.innerHTML = '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>';
+        darkIcon.style.color = 'var(--primary)';
+        toggle.setAttribute('aria-pressed','false');
+      }
+      // the label shows the action you can take
+      if (toggleLabel) toggleLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
+    }
+
+    const stored = localStorage.getItem('eh_portfolio_darkmode');
+    const initialIsDark = stored === '1';
+    if (initialIsDark) ROOT.classList.add('dark-mode');
+    renderToggleIcon(initialIsDark);
+
+    function setDarkMode(on, persist) {
+      if (on) {
+        ROOT.classList.add('dark-mode');
+      } else {
+        ROOT.classList.remove('dark-mode');
+      }
+      renderToggleIcon(on);
+      if (persist) localStorage.setItem('eh_portfolio_darkmode', on ? '1' : '0');
+      toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    toggle.addEventListener('click', function(){
+      const isDark = ROOT.classList.contains('dark-mode');
+      setDarkMode(!isDark, true);
+    });
+
+    toggle.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle.click();
+      }
+    });
+
   </script>
 </body>
 </html>
