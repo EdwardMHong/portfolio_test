@@ -27,14 +27,14 @@
     :root.dark-mode {
       --primary: #60a5fa;
       --muted: #94a3b8;
-      --card: #071022;            /* darker card to contrast with solid bg */
-      --bg-top: #050612;         /* solid background color (no gradient) */
-      --bg-bottom: #050612;      /* same as top to avoid gradient */
+      --card: #071022;
+      --bg-top: #050612;
+      --bg-bottom: #050612;
       --text: #e6eef9;
       --faint: rgba(255,255,255,0.04);
       --grid-opacity: 0.22;
-      --node-color: 150,162,255; /* slightly paler nodes for dark */
-      --node-alpha-mult: 1.18;   /* more visible in dark mode */
+      --node-color: 150,162,255;
+      --node-alpha-mult: 1.18;
       --line-alpha-mult: 1.24;
     }
 
@@ -48,7 +48,6 @@
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       position:relative;
       overflow-x:hidden;
-      /* default (light) uses a soft radial + gradient wash */
       background:
         radial-gradient(1200px 400px at 10% 10%, rgba(37,99,235,0.06), transparent 10%),
         radial-gradient(900px 300px at 90% 80%, rgba(99,102,241,0.03), transparent 12%),
@@ -56,26 +55,12 @@
       transition: background .45s ease, color .25s ease;
     }
 
-    /* in dark mode, use solid background color (no gradient) */
     :root.dark-mode body {
       background: var(--bg-top) !important;
     }
 
-    /* interactive canvas background - very bottom */
-    #bgCanvas {
-      position:fixed;
-      inset:0;
-      width:100%;
-      height:100%;
-      z-index:-20; /* bottom-most */
-      pointer-events:none;
-      display:block;
-      filter: blur(0.6px) saturate(.95) contrast(.95);
-      opacity: 1;
-      transition: filter .35s ease, opacity .35s ease;
-    }
+    #bgCanvas { position:fixed; inset:0; width:100%; height:100%; z-index:-20; pointer-events:none; filter: blur(0.6px) saturate(.95) contrast(.95); opacity:1; transition: filter .35s ease, opacity .35s ease; }
 
-    /* faint diagonal overlay grid (subtle, adjusted by --grid-opacity) */
     body::before{
       content:'';
       position:fixed;
@@ -162,13 +147,7 @@
       #zoomContent { min-height: 42vh !important; }
     }
 
-    /* Dark-mode UI overrides for clear contrast (kept transitions / animations) */
-    :root.dark-mode .bg-white {
-      background: var(--card) !important;
-      color: var(--text) !important;
-      border-color: rgba(255,255,255,0.04) !important;
-      box-shadow: 0 12px 34px rgba(0,0,0,0.45) !important;
-    }
+    :root.dark-mode .bg-white { background: var(--card) !important; color: var(--text) !important; border-color: rgba(255,255,255,0.04) !important; box-shadow: 0 12px 34px rgba(0,0,0,0.45) !important; }
     :root.dark-mode .text-slate-600 { color: #cbd7f0 !important; }
     :root.dark-mode .text-slate-700 { color: #bfcfe8 !important; }
     :root.dark-mode .text-slate-500 { color: #98abcf !important; }
@@ -176,7 +155,6 @@
 
     :root.dark-mode .overlay-backdrop { background: rgba(1,2,6,0.8); }
 
-    /* Ensure zoom panel, zoom content and other special blocks match card color in dark mode */
     :root.dark-mode .zoom-panel,
     :root.dark-mode #zoomContent,
     :root.dark-mode .img-card,
@@ -191,71 +169,28 @@
       color: var(--text) !important;
     }
 
-    /* Dark-mode toggle button (top-right) */
-    #darkToggle {
-      position: fixed;
-      right: 18px;
-      top: 18px;
-      z-index: 60;
-      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
-      border-radius: 9999px;
-      padding: 6px;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.08);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(2,6,23,0.06);
-      cursor: pointer;
-      width:46px;
-      height:46px;
-      justify-content:center;
-      transition: transform .15s ease, background .25s ease, border-color .25s ease;
-    }
+    #darkToggle { position: fixed; right: 18px; top: 18px; z-index: 60; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); border-radius: 9999px; padding: 6px; box-shadow: 0 6px 18px rgba(2,6,23,0.08); display: flex; align-items: center; gap: 8px; border: 1px solid rgba(2,6,23,0.06); cursor: pointer; width:46px; height:46px; justify-content:center; transition: transform .15s ease, background .25s ease, border-color .25s ease; }
     #darkToggle:hover { transform: translateY(-3px); }
-    :root.dark-mode #darkToggle {
-      background: linear-gradient(180deg, rgba(10,14,24,0.6), rgba(6,10,18,0.5));
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 6px 18px rgba(2,6,23,0.22);
-    }
+    :root.dark-mode #darkToggle { background: linear-gradient(180deg, rgba(10,14,24,0.6), rgba(6,10,18,0.5)); border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 6px 18px rgba(2,6,23,0.22); }
     #darkToggle svg { width:20px; height:20px; display:block; }
-    #darkToggleLabel {
-      position: fixed;
-      right: 72px;
-      top: 22px;
-      z-index: 60;
-      font-size: 13px;
-      color: var(--muted);
-      background: transparent;
-      padding: 6px 10px;
-      border-radius: 8px;
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(-6px);
-      transition: opacity .14s ease, transform .14s ease;
-    }
+    #darkToggleLabel { position: fixed; right: 72px; top: 22px; z-index: 60; font-size: 13px; color: var(--muted); background: transparent; padding: 6px 10px; border-radius: 8px; pointer-events: none; opacity: 0; transform: translateY(-6px); transition: opacity .14s ease, transform .14s ease; }
     #darkToggle:hover + #darkToggleLabel { opacity: 1; transform: translateY(0); pointer-events: none; }
 
   </style>
 </head>
 <body>
-  <!-- interactive canvas background -->
   <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
-  <!-- dark mode toggle -->
   <button id="darkToggle" aria-pressed="false" title="Toggle dark mode" aria-label="Toggle dark mode">
-    <svg id="darkIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)">
-      <circle cx="12" cy="12" r="4" fill="currentColor" style="color:var(--primary)"></circle>
-    </svg>
+    <svg id="darkIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)"><circle cx="12" cy="12" r="4" fill="currentColor" style="color:var(--primary)"></circle></svg>
   </button>
   <div id="darkToggleLabel">Dark mode</div>
 
-  <!-- decorative blobs -->
   <div aria-hidden="true">
     <div class="blob a" style="left:-6%; top:-8%; width:680px; height:420px; background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(99,102,241,0.08));"></div>
     <div class="blob b" style="right:3%; top:8%; width:520px; height:360px; background: linear-gradient(135deg, rgba(96,165,250,0.14), rgba(99,102,241,0.04));"></div>
   </div>
 
-  <!-- Header -->
   <header class="relative overflow-hidden">
     <div class="content max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
       <div>
@@ -273,7 +208,6 @@
   </header>
 
   <main class="content max-w-6xl mx-auto px-6 pb-20">
-    <!-- HERO -->
     <section class="grid md:grid-cols-2 gap-8 items-start py-8">
       <div class="reveal" id="hero-left">
         <h2 class="text-4xl md:text-5xl font-extrabold leading-tight">Hello,<span class="text-[color:var(--primary)]"> I’m Edward.</span></h2>
@@ -306,7 +240,6 @@
       </div>
     </section>
 
-    <!-- PROJECT (top) -->
     <section id="prototypes" class="mt-10">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Prototype: Optical Contact Angle Goniometer</h3>
@@ -337,7 +270,6 @@
       </div>
     </section>
 
-    <!-- RESEARCH (now BETWEEN prototype and work) - mirrored layout: image LEFT, text RIGHT -->
     <section id="research" class="mt-10 bg-[linear-gradient(180deg,#ffffff,rgba(240,249,255,0.6))] rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
       <div class="mb-4">
         <h3 class="text-2xl md:text-3xl font-semibold">Research Paper</h3>
@@ -345,15 +277,13 @@
       </div>
 
       <div class="space-y-4">
-        <!-- make this card full-width and match education block style -->
         <article class="relative pl-6 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open research details">
           <div class="absolute left-0 top-6 w-3 h-3 rounded-full bg-[color:var(--primary)] shadow"></div>
 
           <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold" style="line-height:1.1;">
-                <a href="https://doi.org/10.1039/D5TA08956E" target="_blank" rel="noreferrer"
-                   style="font-weight:700; text-decoration:underline; color:var(--text);">
+                <a href="https://doi.org/10.1039/D5TA08956E" target="_blank" rel="noreferrer" style="font-weight:700; text-decoration:underline; color:var(--text);">
                   Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy
                 </a>
                 <div style="font-size:12px; font-weight:700; color:var(--primary); margin-top:6px;">Co-authored</div>
@@ -365,12 +295,10 @@
 
           <div class="mt-3">
             <div class="grid md:grid-cols-2 gap-3 items-start">
-              <!-- left: research photo -->
               <div class="img-card education-thumb img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
                 <img class="thumb w-full h-auto" alt="Hydrogel Demo Pic" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
               </div>
 
-              <!-- right: quick bullet list (all bullets moved here) -->
               <div class="text-sm text-slate-600 flex flex-col justify-center">
                 <div class="mb-2">• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
                 <div class="mb-2">• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
@@ -384,7 +312,6 @@
       </div>
     </section>
 
-    <!-- WORK -->
     <section id="experience" class="mt-12">
       <div class="mb-6 reveal">
         <h3 class="text-2xl md:text-3xl font-semibold">Work Experience</h3>
@@ -392,7 +319,6 @@
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- H2nano -->
         <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="h2nano" tabindex="0" role="button" aria-label="Open H2nano details">
           <div class="flex items-start justify-between">
             <div>
@@ -415,7 +341,6 @@
           </div>
         </article>
 
-        <!-- SMART Lab -->
         <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="smartlab" tabindex="0" role="button" aria-label="Open SMART Lab details">
           <div class="flex items-start justify-between">
             <div>
@@ -438,7 +363,6 @@
           </div>
         </article>
 
-        <!-- Avanade -->
         <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="avanade" tabindex="0" role="button" aria-label="Open Avanade details">
           <div class="flex items-start justify-between">
             <div>
@@ -460,7 +384,6 @@
           </div>
         </article>
 
-        <!-- Amazon -->
         <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm reveal experience-card" data-full-id="amazon" tabindex="0" role="button" aria-label="Open Amazon details">
           <div class="flex items-start justify-between">
             <div>
@@ -484,7 +407,6 @@
       </div>
     </section>
 
-    <!-- EDUCATION -->
     <section id="education" class="mt-12 bg-[linear-gradient(180deg,#ffffff,rgba(240,249,255,0.6))] rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
       <div class="mb-4">
         <h3 class="text-2xl md:text-3xl font-semibold">Education</h3>
@@ -508,12 +430,10 @@
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-3">
-            <!-- SEM Image -->
             <div class="img-card education-thumb img-placeholder" data-title="SEM — topography" role="button" tabindex="0" data-full-src="./SEM.jpg" aria-label="Open SEM preview">
               <img class="thumb w-full h-auto" alt="SEM" src="./SEM.jpg" loading="lazy">
             </div>
 
-            <!-- SAED GIF Preview (clickable, expands to play gif) -->
             <div class="img-card education-thumb img-placeholder img-gif-poster" data-title="SAED (real-time)" data-gif="./SAED%20gif.gif" role="button" tabindex="0" aria-label="Open SAED gif preview">
               <img class="thumb w-full h-auto" alt="SAED" src="./SAED%20gif.gif" loading="lazy">
             </div>
@@ -523,7 +443,6 @@
     </section>
   </main>
 
-  <!-- overlay -->
   <div id="overlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="overlay-backdrop" id="overlayBackdrop"></div>
 
@@ -552,7 +471,6 @@
     </div>
   </div>
 
-  <!-- CONTACT -->
   <footer id="contact" class="content max-w-6xl mx-auto px-6 mt-6 pb-10">
     <div class="mb-6 reveal">
       <h3 class="text-2xl md:text-3xl font-semibold">Contact</h3>
@@ -567,7 +485,7 @@
     <div class="mt-8 text-center text-sm text-slate-500 reveal">2025-2026</div>
   </footer>
 
-  <!-- CANVAS SCRIPT: more interactive mouse influence + scheme aware -->
+  <!-- canvas script (unchanged from earlier version) -->
   <script>
   (function(){
     const canvas = document.getElementById('bgCanvas');
@@ -634,7 +552,7 @@
           const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
           const R = 220;
           if (dist < R) {
-            const strength = (1 - (dist / R)) * 2.4; // increased mouse influence per your request
+            const strength = (1 - (dist / R)) * 2.4;
             this.vx += (mx / dist) * strength * 1.6;
             this.vy += (my / dist) * strength * 1.6;
           }
@@ -682,10 +600,7 @@
       }
     }
 
-    function initParticles(){
-      particles.length = 0;
-      for (let i=0;i<COUNT;i++) particles.push(new NodeLocal());
-    }
+    function initParticles(){ particles.length = 0; for (let i=0;i<COUNT;i++) particles.push(new NodeLocal()); }
     initParticles();
 
     function computeNearestNeighbors(k) {
@@ -820,9 +735,8 @@
   })();
   </script>
 
-  <!-- Main page scripts (overlays, galleries, details, dark toggle) -->
+  <!-- Main scripts -->
   <script>
-    // reveal observer
     (function(){
       var els = document.querySelectorAll('.reveal');
       var obs = new IntersectionObserver(function(entries){
@@ -831,7 +745,6 @@
       els.forEach(function(el){ obs.observe(el); });
     })();
 
-    // overlay controls & gallery logic (keeps behavior)
     var overlay = document.getElementById('overlay');
     var zoomPanel = document.getElementById('zoomPanel');
     var zoomContent = document.getElementById('zoomContent');
@@ -846,7 +759,6 @@
     var gallery = [];
     var galleryIndex = 0;
 
-    // details for overlays (education & experience & research)
     var detailsMap = {
       "h2nano": {
         "title": "Material Science Specialist",
@@ -910,7 +822,6 @@
         "title": "Shape-change programming of zwitterionic hydrogels (Co-authored)",
         "subtitle": "Surface-energy directed chemical gradients — DMAPS / MAA",
         "date": "Published 2026",
-        // bullets to be shown in right side (these will also appear in the zoom overlay)
         "items": [
           "Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.",
           "Programmed bending and complex shape morphing via surface-energy directed monomer migration.",
@@ -921,7 +832,6 @@
       }
     };
 
-    // open overlay
     function openOverlay(title, content, opts) {
       opts = opts || {};
       zoomTitle.textContent = title || 'Preview';
@@ -930,15 +840,9 @@
       gallery = [];
       galleryIndex = 0;
 
-      // reset zoomPanel width unless explicitly expanded
-      if (!opts.expandWidth) {
-        zoomPanel.style.width = ''; // reset to CSS default
-      } else {
-        // expand overlay for research so it fills more of the page horizontally
-        zoomPanel.style.width = 'min(98%, 1200px)';
-      }
+      if (!opts.expandWidth) zoomPanel.style.width = '';
+      else zoomPanel.style.width = 'min(98%, 1200px)';
 
-      // hide headerDownload by default
       headerDownload.style.display = 'none';
       headerDownload.href = '#';
       headerDownload.removeAttribute('download');
@@ -947,12 +851,8 @@
         gallery = content.slice();
         renderGalleryImage(0);
       } else if (typeof content === 'string') {
-        if (opts.filePreview) {
-          // file preview: show iframe and header download
-          renderFilePreview(content, opts);
-        } else {
-          renderSingle(content);
-        }
+        if (opts.filePreview) renderFilePreview(content, opts);
+        else renderSingle(content);
       } else if (content instanceof Node) {
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'none';
@@ -976,7 +876,6 @@
       img.src = url;
       img.className = 'zoom-img';
       img.alt = zoomTitle.textContent || 'Preview';
-      // container so we can add caption under image if needed
       var wrap = document.createElement('div');
       wrap.style.width = '100%';
       wrap.style.display = 'flex';
@@ -1005,13 +904,11 @@
       zoomContent.appendChild(img);
     }
 
-    // render file preview (iframe) and set header download
     function renderFilePreview(fileUrl, opts) {
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
       zoomContent.innerHTML = '';
 
-      // larger embed area
       var wrapper = document.createElement('div');
       wrapper.style.width = '100%';
       wrapper.style.display = 'flex';
@@ -1021,13 +918,12 @@
       var embed = document.createElement('iframe');
       embed.src = fileUrl;
       embed.style.width = '100%';
-      embed.style.height = '78vh'; // expanded preview area
+      embed.style.height = '78vh';
       embed.style.border = '0';
       wrapper.appendChild(embed);
 
       zoomContent.appendChild(wrapper);
 
-      // configure header download button
       headerDownload.href = fileUrl;
       if (opts.fileName) headerDownload.setAttribute('download', opts.fileName);
       headerDownload.style.display = 'inline-block';
@@ -1044,12 +940,10 @@
         prevBtn.style.display = 'inline-block';
         nextBtn.style.display = 'inline-block';
         headerDownload.style.display = 'none';
-        // reset any width expansion applied for research
         zoomPanel.style.width = '';
       }, 260);
     }
 
-    // event listeners
     zoomClose.addEventListener('click', closeOverlay);
     overlayBackdrop.addEventListener('click', closeOverlay);
     window.addEventListener('keydown', function(e){
@@ -1060,7 +954,6 @@
     prevBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex-1+gallery.length)%gallery.length; renderGalleryImage(galleryIndex); }});
     nextBtn.addEventListener('click', function(){ if (gallery.length>1) { galleryIndex = (galleryIndex+1)%gallery.length; renderGalleryImage(galleryIndex); }});
 
-    // make poster from GIF first frame (best-effort)
     async function makeGifPoster(gifUrl) {
       try {
         var resp = await fetch(gifUrl);
@@ -1078,9 +971,7 @@
       }
     }
 
-    // DOM ready
     document.addEventListener('DOMContentLoaded', function(){
-      // set GIF posters
       var gifEls = document.querySelectorAll('.img-gif-poster');
       gifEls.forEach(function(el){
         var gif = el.dataset.gif;
@@ -1088,98 +979,55 @@
         if (gif && img) {
           makeGifPoster(gif).then(function(poster){
             if (poster) img.src = poster;
-          }).catch(function(){ /* fallback: gif remains */ });
+          }).catch(function(){ });
         }
       });
 
-      // initial reveal
       document.querySelectorAll('.reveal').forEach(function(el){
         var rect = el.getBoundingClientRect();
         if (rect.top < window.innerHeight) el.classList.add('show');
       });
     });
 
-    // thumbnail / gallery clicks (logos are not .img-placeholder)
     document.querySelectorAll('.img-placeholder').forEach(function(el){
       el.addEventListener('click', function(ev){
         ev.stopPropagation();
 
-        // Special case: if this placeholder is inside #research, open a composite node:
+        // If image is inside the research section -> open photo-only overlay with citation
         if (el.closest('#research')) {
-          // build an image+caption+video overlay when clicking the research image
           var img = el.querySelector('img');
           if (img) {
-            // Build left (image) + right (text) layout similar to detail overlay
-            var wrapper = document.createElement('div');
-            wrapper.style.display = 'flex';
-            wrapper.style.gap = '20px';
-            wrapper.style.alignItems = 'stretch';
-            wrapper.style.width = '100%';
-            wrapper.style.boxSizing = 'border-box';
+            var wrap = document.createElement('div');
+            wrap.style.width = '100%';
+            wrap.style.display = 'flex';
+            wrap.style.flexDirection = 'column';
+            wrap.style.alignItems = 'center';
+            wrap.style.gap = '10px';
 
-            // left: image + formal citation beneath
-            var left = document.createElement('div');
-            left.style.flex = '0 0 44%';
-            left.style.display = 'flex';
-            left.style.flexDirection = 'column';
-            left.style.alignItems = 'stretch';
-            left.style.gap = '10px';
+            var large = document.createElement('img');
+            large.src = img.src;
+            large.alt = img.alt || 'Research image';
+            large.className = 'zoom-img';
+            large.style.borderRadius = '10px';
+            wrap.appendChild(large);
 
-            var big = document.createElement('img');
-            big.src = img.src;
-            big.alt = img.alt || 'Research image';
-            big.className = 'zoom-img';
-            big.style.borderRadius = '10px';
-            left.appendChild(big);
+            var caption = document.createElement('div');
+            caption.style.fontSize = '13px';
+            caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
+            caption.style.textAlign = 'center';
+            caption.style.marginTop = '6px';
+            caption.style.fontStyle = 'italic';
+            caption.textContent = 'N. Bouzari et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
+            wrap.appendChild(caption);
 
-            var citation = document.createElement('div');
-            citation.style.fontSize = '13px';
-            citation.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
-            citation.style.textAlign = 'center';
-            citation.style.marginTop = '6px';
-            citation.style.fontStyle = 'normal';
-            // More formal citation (best effort)
-            citation.textContent = 'E. Hong et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
-            left.appendChild(citation);
+            openOverlay('Hydrogel — image', wrap, { expandWidth: false });
 
-            wrapper.appendChild(left);
-
-            // right: long description + bullets, vertically centered
-            var right = document.createElement('div');
-            right.style.flex = '1';
-            right.style.display = 'flex';
-            right.style.flexDirection = 'column';
-            right.style.justifyContent = 'center';
-            right.style.gap = '10px';
-            right.style.padding = '6px 12px';
-
-            var long = document.createElement('div');
-            long.style.marginBottom = '6px';
-            long.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#0f172a';
-            long.textContent = 'This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations.';
-            right.appendChild(long);
-
-            var ul = document.createElement('ul');
-            ul.style.paddingLeft = '18px';
-            ul.style.marginTop = '6px';
-            var bullets = detailsMap['research'].items || [];
-            bullets.forEach(function(b){
-              var li = document.createElement('li');
-              li.style.marginBottom = '8px';
-              li.textContent = b;
-              ul.appendChild(li);
-            });
-            right.appendChild(ul);
-
-            wrapper.appendChild(right);
-
-            openOverlay('Hydrogel — details', wrapper, { expandWidth: true });
-            // set zoomSub to subtitle + date
-            zoomSub.textContent = detailsMap['research'].subtitle + ' • ' + detailsMap['research'].date;
-            // configure headerDownload for PDF
-            headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
-            headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
-            headerDownload.style.display = 'inline-block';
+            // hide nav arrows and headerDownload for image-only view
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            headerDownload.style.display = 'none';
+            // set zoomSub to citation short
+            zoomSub.textContent = 'N. Bouzari et al. — 2026';
             return;
           }
         }
@@ -1190,10 +1038,9 @@
             var prepared = items.map(function(it){ return (typeof it === 'string') ? { src: it, title: '' } : { src: it.src, title: it.title || '' }; });
             openOverlay(el.dataset.title || 'Preview', prepared);
             return;
-          } catch (err) { /* fallback below */ }
+          } catch (err) { }
         }
         if (el.classList.contains('img-gif-poster') && el.dataset.gif) {
-          // play gif in overlay
           openOverlay(el.dataset.title || 'Preview', el.dataset.gif);
           return;
         }
@@ -1220,7 +1067,6 @@
       el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
     });
 
-    // build detail overlay (logo optional) — research returns node+opts when used in card click
     function buildDetailOverlay(detailKey, logoSrc, showLogo) {
       var info = detailsMap[detailKey];
       if (!info) return null;
@@ -1232,7 +1078,6 @@
       wrapper.style.background = 'transparent';
       wrapper.style.padding = '6px 0';
 
-      // Research special layout: left = image + video stack, right = long_description + bullets (centered vertically)
       if (detailKey === 'research') {
         var left = document.createElement('div');
         left.style.flex = '0 0 44%';
@@ -1242,7 +1087,6 @@
         left.style.gap = '12px';
         left.style.alignItems = 'stretch';
 
-        // image
         var img = document.createElement('img');
         img.src = './Hydrogel%20Demo%20Pic.jpg';
         img.alt = 'Hydrogel Demo Pic';
@@ -1252,16 +1096,14 @@
         img.style.objectFit = 'cover';
         left.appendChild(img);
 
-        // formal citation under image (zoomed-in box will include this)
         var citation = document.createElement('div');
         citation.style.fontSize = '12px';
         citation.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
         citation.style.marginTop = '6px';
         citation.style.fontStyle = 'italic';
-        citation.textContent = 'E. Hong et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
+        citation.textContent = 'N. Bouzari et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
         left.appendChild(citation);
 
-        // video
         var vid = document.createElement('video');
         vid.controls = true;
         vid.playsInline = true;
@@ -1277,12 +1119,10 @@
         right.className = 'detail-text detail-scroll';
         right.style.flex = '1';
         right.style.paddingLeft = '18px';
-        // center vertically
         right.style.display = 'flex';
         right.style.flexDirection = 'column';
         right.style.justifyContent = 'center';
 
-        // long description then bullets (the "zoomed-in text" restored to previous long_description + bullets)
         var inner = '<p style="margin-bottom:12px;">' + info.long_description + '</p>';
         inner += '<ul style="margin-top:0; padding-left: 18px;">';
         info.items.forEach(function(item){ inner += '<li style="margin-bottom:10px;">' + item + '</li>'; });
@@ -1290,7 +1130,6 @@
         right.innerHTML = inner;
         wrapper.appendChild(right);
 
-        // configure headerDownload to point to the uploaded paper file
         headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
         headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
         headerDownload.style.display = 'inline-block';
@@ -1298,7 +1137,6 @@
         return { node: wrapper, opts: { expandWidth: true } };
       }
 
-      // fallback for other detail types
       if (showLogo) {
         var left = document.createElement('div');
         left.style.flex = '0 0 auto';
@@ -1333,15 +1171,12 @@
       return wrapper;
     }
 
-    // attach click handlers for experience, education and research cards
     document.querySelectorAll('.experience-card, section#research .experience-card').forEach(function(card){
       card.addEventListener('click', function(){
         var key = card.dataset.fullId;
-        // find logo if available (but for education we will not show the logo)
         var logoImg = card.querySelector('.logo-square img') || card.querySelector('img');
         var logoSrc = logoImg ? logoImg.src : null;
 
-        // if education -> only show text (showLogo false)
         var showLogo = key !== 'education-full' && key !== 'research';
         var built = buildDetailOverlay(key, logoSrc, showLogo);
         if (!built) return;
@@ -1360,7 +1195,6 @@
       card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
     });
 
-    // prototype gallery click
     document.querySelectorAll('.img-gallery').forEach(function(el){
       el.addEventListener('click', function(ev){
         ev.stopPropagation();
@@ -1376,7 +1210,6 @@
       el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
     });
 
-    // resume & portfolio preview handlers (header download shown, bottom close removed) - filenames updated to 2026
     var resumeLink = document.getElementById('resumeLink');
     var portfolioLink = document.getElementById('portfolioLink');
     if (resumeLink) {
@@ -1394,9 +1227,6 @@
       });
     }
 
-    // =========================
-    // Dark mode toggle behavior
-    // =========================
     const toggle = document.getElementById('darkToggle');
     const toggleLabel = document.getElementById('darkToggleLabel');
     const darkIcon = document.getElementById('darkIcon');
@@ -1413,7 +1243,6 @@
         darkIcon.style.color = 'var(--primary)';
         toggle.setAttribute('aria-pressed','false');
       }
-      // the label shows the action you can take
       if (toggleLabel) toggleLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
     }
 
@@ -1423,11 +1252,7 @@
     renderToggleIcon(initialIsDark);
 
     function setDarkMode(on, persist) {
-      if (on) {
-        ROOT.classList.add('dark-mode');
-      } else {
-        ROOT.classList.remove('dark-mode');
-      }
+      if (on) ROOT.classList.add('dark-mode'); else ROOT.classList.remove('dark-mode');
       renderToggleIcon(on);
       if (persist) localStorage.setItem('eh_portfolio_darkmode', on ? '1' : '0');
       toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1437,12 +1262,8 @@
       const isDark = ROOT.classList.contains('dark-mode');
       setDarkMode(!isDark, true);
     });
-
     toggle.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggle.click();
-      }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle.click(); }
     });
 
   </script>
