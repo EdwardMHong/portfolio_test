@@ -338,32 +338,41 @@
     </section>
 
     <!-- RESEARCH (now BETWEEN prototype and work) - mirrored layout: image LEFT, text RIGHT -->
-    <section id="research" class="mt-10 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
+    <section id="research" class="mt-10 bg-[linear-gradient(180deg,#ffffff,rgba(240,249,255,0.6))] rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
       <div class="mb-4">
         <h3 class="text-2xl md:text-3xl font-semibold">Research Paper</h3>
-        <p class="text-sm text-slate-600 mt-1">Selected publications & experiments</p>
+        <p class="text-sm text-slate-600 mt-1">Co-authored publications and experiments</p>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-6 items-center">
-        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open research details">
-          <div class="grid md:grid-cols-2 gap-6 items-center">
-            <!-- left: picture -->
-            <div class="img-card h-56 img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
-              <img class="thumb" alt="Hydrogel Demo" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
+      <div class="space-y-4">
+        <!-- make this card full-width and match education block style -->
+        <article class="relative pl-6 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open research details">
+          <div class="absolute left-0 top-6 w-3 h-3 rounded-full bg-[color:var(--primary)] shadow"></div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-semibold">Shape-change programming of zwitterionic hydrogels <span style="font-size:12px; font-weight:700; color:var(--primary); margin-left:8px;">Co-authored</span></div>
+              <div class="text-sm text-slate-600">Surface-energy directed chemical gradients — DMAPS / MAA</div>
+            </div>
+            <div class="text-sm text-slate-500">2024 • Waterloo, ON</div>
+          </div>
+
+          <div class="mt-3 text-sm text-slate-600 space-y-2">
+            <div>• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
+            <div>• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <!-- left: research photo -->
+            <div class="img-card education-thumb img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
+              <img class="thumb w-full h-auto" alt="Hydrogel Demo Pic" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
             </div>
 
-            <!-- right: brief text -->
-            <div>
-              <div class="font-semibold">Shape-change programming of zwitterionic hydrogels</div>
-              <div class="text-sm text-slate-600 mt-2">Programmed bending & complex deformation via surface-energy-directed chemical gradients.</div>
-              <div class="text-sm text-slate-500 mt-3">2025–2026 • University lab project</div>
-              <div class="mt-4 text-sm text-slate-600">
-                <ul class="list-disc list-inside">
-                  <li>Monomer migration (DMAPS/MAA) creates wetting/chemistry gradients.</li>
-                  <li>Rapid pH-triggered bending and programmable 2D→3D morphing.</li>
-                  <li>Characterized with SEM, EDX, fluorescence imaging and COMSOL modeling.</li>
-                </ul>
-              </div>
+            <!-- right: quick bullet list -->
+            <div class="text-sm text-slate-600">
+              <div class="mb-2">• Automated image processing for droplet profiling</div>
+              <div class="mb-2">• Video demonstration included (Hydrogel Demo Vid)</div>
+              <div class="text-xs text-slate-400">Click to expand for full description, video and downloadable paper.</div>
             </div>
           </div>
         </article>
@@ -620,7 +629,7 @@
           const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
           const R = 220;
           if (dist < R) {
-            const strength = (1 - (dist / R)) * 1.6;
+            const strength = (1 - (dist / R)) * 2.4; // increased mouse influence per your request
             this.vx += (mx / dist) * strength * 1.6;
             this.vy += (my / dist) * strength * 1.6;
           }
@@ -893,8 +902,8 @@
         ]
       },
       "research": {
-        "title": "Shape-change programming of zwitterionic hydrogels",
-        "subtitle": "Surface-energy directed chemical gradients — DMAPS/MAA method",
+        "title": "Shape-change programming of zwitterionic hydrogels (Co-authored)",
+        "subtitle": "Surface-energy directed chemical gradients — DMAPS / MAA",
         "date": "Published 2026",
         "items": [
           "Chemical-gradient programming via monomer migration yields deterministic bending and complex shape transformations.",
@@ -914,6 +923,14 @@
       zoomContent.innerHTML = '';
       gallery = [];
       galleryIndex = 0;
+
+      // reset zoomPanel width unless explicitly expanded
+      if (!opts.expandWidth) {
+        zoomPanel.style.width = ''; // reset to CSS default
+      } else {
+        // expand overlay for research so it fills more of the page horizontally
+        zoomPanel.style.width = 'min(98%, 1200px)';
+      }
 
       // hide headerDownload by default
       headerDownload.style.display = 'none';
@@ -1013,6 +1030,8 @@
         prevBtn.style.display = 'inline-block';
         nextBtn.style.display = 'inline-block';
         headerDownload.style.display = 'none';
+        // reset any width expansion applied for research
+        zoomPanel.style.width = '';
       }, 260);
     }
 
@@ -1106,36 +1125,55 @@
       el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
     });
 
-    // build detail overlay (logo optional) — special-case 'research' to include video + image
+    // build detail overlay (logo optional) — special-case 'research' to include video + image and expanded area
     function buildDetailOverlay(detailKey, logoSrc, showLogo) {
       var info = detailsMap[detailKey];
       if (!info) return null;
-      var wrapper = document.createElement('div');
-      wrapper.className = 'detail-wrap';
 
-      // Research special layout: left = image + video stack, right = text
+      var wrapper = document.createElement('div');
+      // make wrapper fill and match the card aesthetic
+      wrapper.className = 'detail-wrap';
+      wrapper.style.width = '100%';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.background = 'transparent'; // zoomPanel already provides card bg
+      wrapper.style.padding = '6px 0';
+
+      // Research special layout: left = image + video stack, right = text, with more fill so no empty space
       if (detailKey === 'research') {
         var left = document.createElement('div');
-        left.style.flex = '0 0 420px';
-        left.style.maxWidth = '420px';
+        left.style.flex = '0 0 44%';
+        left.style.maxWidth = '44%';
         left.style.display = 'flex';
         left.style.flexDirection = 'column';
-        left.style.gap = '10px';
+        left.style.gap = '12px';
+        left.style.alignItems = 'stretch';
 
+        // image
         var img = document.createElement('img');
         img.src = './Hydrogel%20Demo%20Pic.jpg';
         img.alt = 'Hydrogel Demo Pic';
         img.style.width = '100%';
+        img.style.height = 'auto';
         img.style.borderRadius = '10px';
         img.style.objectFit = 'cover';
         left.appendChild(img);
 
+        // caption under image (citation)
+        var caption = document.createElement('div');
+        caption.style.fontSize = '12px';
+        caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
+        caption.style.marginTop = '6px';
+        caption.style.fontStyle = 'italic';
+        caption.textContent = 'Fig. 4e — adapted from: Shape-change programming of zwitterionic hydrogels (Co-authored)';
+        left.appendChild(caption);
+
+        // video
         var vid = document.createElement('video');
         vid.controls = true;
         vid.playsInline = true;
         vid.style.width = '100%';
         vid.style.borderRadius = '10px';
-        vid.style.maxHeight = '48vh';
+        vid.style.maxHeight = '44vh';
         vid.src = './Hydrogel%20Demo%20Vid.mp4';
         left.appendChild(vid);
 
@@ -1143,9 +1181,10 @@
 
         var right = document.createElement('div');
         right.className = 'detail-text detail-scroll';
-        var inner = '<h3>' + info.title + '</h3>';
-        if (info.subtitle) inner += '<div class="text-sm text-slate-600" style="margin-bottom:6px;">' + info.subtitle + '</div>';
-        inner += '<div class="meta">' + info.date + '</div>';
+        right.style.flex = '1';
+        right.style.paddingLeft = '18px';
+        // NOTE: title/subtitle/date removed in right area per request — only long description & bullets remain
+        var inner = '';
         if (info.long_description) inner += '<p style="margin-bottom:10px;">' + info.long_description + '</p>';
         inner += '<ul style="margin-top:8px;">';
         info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
@@ -1153,9 +1192,15 @@
         right.innerHTML = inner;
         wrapper.appendChild(right);
 
-        return wrapper;
+        // configure headerDownload to point to the uploaded paper
+        headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
+        headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
+        headerDownload.style.display = 'inline-block';
+
+        return { node: wrapper, opts: { expandWidth: true } };
       }
 
+      // fallback: original detail builder for other keys
       // left: logo (only for work experience; education passes showLogo=false)
       if (showLogo) {
         var left = document.createElement('div');
@@ -1202,24 +1247,19 @@
 
         // if education -> only show text (showLogo false)
         var showLogo = key !== 'education-full' && key !== 'research';
-        var node = buildDetailOverlay(key, logoSrc, showLogo);
-        if (node) {
-          var infoForHeader = detailsMap[key];
-          var headerTitle = infoForHeader ? infoForHeader.title : '';
-          openOverlay(headerTitle, node);
+        var built = buildDetailOverlay(key, logoSrc, showLogo);
+        if (!built) return;
+        // built may return node or {node, opts}
+        var node, opts;
+        if (built.node) { node = built.node; opts = built.opts || {}; }
+        else { node = built; opts = {}; }
 
-          if (infoForHeader) {
-            if (key === 'research') {
-              // research uses long subtitle/date in zoomSub
-              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
-              // Enable headerDownload for research paper if present in repo
-              headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
-              headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
-              headerDownload.style.display = 'inline-block';
-            } else {
-              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
-            }
-          }
+        var infoForHeader = detailsMap[key];
+        var headerTitle = infoForHeader ? infoForHeader.title : '';
+        openOverlay(headerTitle, node, opts);
+
+        if (infoForHeader) {
+          zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
         }
       });
       card.addEventListener('keydown', function(e){ if (e.key === 'Enter') card.click(); });
