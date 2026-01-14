@@ -351,10 +351,21 @@
 
           <div class="flex items-center justify-between">
             <div>
-              <div class="font-semibold">Shape-change programming of zwitterionic hydrogels <span style="font-size:12px; font-weight:700; color:var(--primary); margin-left:8px;">Co-authored</span></div>
+              <div class="font-semibold">
+                <a href="https://doi.org/10.1039/D5TA08956E" target="_blank" rel="noreferrer"
+                   style="font-weight:700; text-decoration:underline; color:var(--text);">
+                  Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy
+                </a>
+                <span style="font-size:12px; font-weight:700; color:var(--primary); margin-left:8px;">Co-authored</span>
+              </div>
               <div class="text-sm text-slate-600">Surface-energy directed chemical gradients — DMAPS / MAA</div>
             </div>
             <div class="text-sm text-slate-500">2024 • Waterloo, ON</div>
+          </div>
+
+          <div class="mt-3 text-sm text-slate-600 space-y-2">
+            <div>• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
+            <div>• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-3">
@@ -365,11 +376,9 @@
 
             <!-- right: quick bullet list -->
             <div class="text-sm text-slate-600">
-              <div class="mb-2">• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
-              <div class="mb-2">• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
               <div class="mb-2">• Automated image processing for droplet profiling</div>
               <div class="mb-2">• Video demonstration included (Hydrogel Demo Vid)</div>
-              <div class="text-xs text-slate-400">Click to expand for full description and video.</div>
+              <div class="text-xs text-slate-400">Click to expand for full description, video and downloadable paper.</div>
             </div>
           </div>
         </article>
@@ -902,11 +911,12 @@
         "title": "Shape-change programming of zwitterionic hydrogels (Co-authored)",
         "subtitle": "Surface-energy directed chemical gradients — DMAPS / MAA",
         "date": "Published 2026",
+        // updated bullets per your request, in the requested order
         "items": [
-          "Chemical-gradient programming via monomer migration yields deterministic bending and complex shape transformations.",
-          "pH-triggered actuation enables rapid bending responses suitable for small soft-robotic actuators.",
-          "Characterized by SEM/EDX, fluorescence imaging, rheology, and modeled using COMSOL.",
-          "Demonstrated patterned substrates enabling spatially-controlled swelling and folding."
+          "Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.",
+          "Programmed bending and complex shape morphing via surface-energy directed monomer migration.",
+          "Automated image processing for droplet profiling",
+          "Video demonstration included (Hydrogel Demo Vid)"
         ],
         "long_description": "This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations. The work includes imaging, compositional analysis, and COMSOL modeling to support the mechanism and potential soft-robotics applications."
       }
@@ -967,7 +977,15 @@
       img.src = url;
       img.className = 'zoom-img';
       img.alt = zoomTitle.textContent || 'Preview';
-      zoomContent.appendChild(img);
+      // container so we can add caption under image if needed
+      var wrap = document.createElement('div');
+      wrap.style.width = '100%';
+      wrap.style.display = 'flex';
+      wrap.style.flexDirection = 'column';
+      wrap.style.alignItems = 'center';
+      wrap.style.gap = '10px';
+      wrap.appendChild(img);
+      zoomContent.appendChild(wrap);
     }
 
     function renderGalleryImage(index) {
@@ -1086,6 +1104,39 @@
     document.querySelectorAll('.img-placeholder').forEach(function(el){
       el.addEventListener('click', function(ev){
         ev.stopPropagation();
+
+        // Special case: if this placeholder is inside #research, open a composite node:
+        if (el.closest('#research')) {
+          // build an image+caption overlay when clicking the research image
+          var img = el.querySelector('img');
+          if (img) {
+            var wrap = document.createElement('div');
+            wrap.style.width = '100%';
+            wrap.style.display = 'flex';
+            wrap.style.flexDirection = 'column';
+            wrap.style.alignItems = 'center';
+            wrap.style.gap = '10px';
+
+            var big = document.createElement('img');
+            big.src = img.src;
+            big.alt = img.alt || 'Research image';
+            big.className = 'zoom-img';
+            wrap.appendChild(big);
+
+            var caption = document.createElement('div');
+            caption.style.width = '100%';
+            caption.style.fontSize = '13px';
+            caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
+            caption.style.textAlign = 'center';
+            caption.style.fontStyle = 'italic';
+            caption.textContent = 'Fig. 4e — Shape-change programming of zwitterionic hydrogels (Co-authored)';
+            wrap.appendChild(caption);
+
+            openOverlay('Hydrogel — image', wrap);
+            return;
+          }
+        }
+
         if (el.classList.contains('img-gallery') && el.dataset.images) {
           try {
             var items = JSON.parse(el.dataset.images);
@@ -1135,7 +1186,7 @@
       wrapper.style.background = 'transparent'; // zoomPanel already provides card bg
       wrapper.style.padding = '6px 0';
 
-      // Research special layout: left = image + video stack, right = text, with more fill so no empty space
+      // Research special layout: left = image + video stack, right = text (only bullets), centered vertically
       if (detailKey === 'research') {
         var left = document.createElement('div');
         left.style.flex = '0 0 44%';
@@ -1161,7 +1212,7 @@
         caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
         caption.style.marginTop = '6px';
         caption.style.fontStyle = 'italic';
-        caption.textContent = 'Fig. 4e — adapted from: Shape-change programming of zwitterionic hydrogels (Co-authored)';
+        caption.textContent = 'Fig. 4e — Shape-change programming of zwitterionic hydrogels (Co-authored)';
         left.appendChild(caption);
 
         // video
@@ -1180,11 +1231,14 @@
         right.className = 'detail-text detail-scroll';
         right.style.flex = '1';
         right.style.paddingLeft = '18px';
-        // NOTE: title/subtitle/date removed in right area per request — only long description & bullets remain
-        var inner = '';
-        if (info.long_description) inner += '<p style="margin-bottom:10px;">' + info.long_description + '</p>';
-        inner += '<ul style="margin-top:8px;">';
-        info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
+        // center vertically: make column flex and center
+        right.style.display = 'flex';
+        right.style.flexDirection = 'column';
+        right.style.justifyContent = 'center';
+
+        // Only the bullet points (in requested order) — no top title/subtitle/date in the right area
+        var inner = '<ul style="margin-top:0; padding-left: 18px;">';
+        info.items.forEach(function(item){ inner += '<li style="margin-bottom:10px;">' + item + '</li>'; });
         inner += '</ul>';
         right.innerHTML = inner;
         wrapper.appendChild(right);
@@ -1246,7 +1300,6 @@
         var showLogo = key !== 'education-full' && key !== 'research';
         var built = buildDetailOverlay(key, logoSrc, showLogo);
         if (!built) return;
-        // built may return node or {node, opts}
         var node, opts;
         if (built.node) { node = built.node; opts = built.opts || {}; }
         else { node = built; opts = {}; }
@@ -1350,4 +1403,3 @@
   </script>
 </body>
 </html>
-
