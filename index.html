@@ -183,14 +183,13 @@
     :root.dark-mode .logo-square,
     :root.dark-mode section#education,
     :root.dark-mode .snapshot,
-    :root.dark-mode .pill-nav a {
+    :root.dark-mode .pill-nav a,
+    :root.dark-mode section#research,
+    :root.dark-mode .bg-white {
       background: var(--card) !important;
       border-color: rgba(255,255,255,0.04) !important;
       color: var(--text) !important;
     }
-
-    /* override Tailwind/bg-slate-50 used on the zoomContent wrapper */
-    :root.dark-mode .bg-slate-50 { background: var(--card) !important; }
 
     /* Dark-mode toggle button (top-right) */
     #darkToggle {
@@ -267,6 +266,7 @@
         <a href="#prototypes" class="hover:underline">Project</a>
         <a href="#experience" class="hover:underline">Work</a>
         <a href="#education" class="hover:underline">Education</a>
+        <a href="#research" class="hover:underline">Research</a>
         <a href="#contact" class="px-3 py-1 rounded-md bg-[color:var(--primary)] text-white">Contact</a>
       </nav>
     </div>
@@ -289,6 +289,7 @@
             <a href="#prototypes">Project</a>
             <a href="#experience">Work</a>
             <a href="#education">Education</a>
+            <a href="#research">Research</a>
           </div>
         </div>
       </div>
@@ -299,8 +300,8 @@
         </div>
 
         <div class="mt-4 flex gap-3 justify-start">
-          <a id="resumeLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Resume%20-%202025.pdf" download>Resume (PDF)</a>
-          <a id="portfolioLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Portfolio%20-%202025.pdf" download>Portfolio (PDF)</a>
+          <a id="resumeLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Resume%20-%202026.pdf">Resume (PDF)</a>
+          <a id="portfolioLink" class="px-3 py-2 border rounded-md text-sm bg-white" href="./Edward%20Hong%20Portfolio%20-%202026.pdf">Portfolio (PDF)</a>
         </div>
       </div>
     </section>
@@ -473,6 +474,38 @@
         </article>
       </div>
     </section>
+
+    <!-- RESEARCH (new section between Education and Prototype) -->
+    <section id="research" class="mt-10 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm reveal">
+      <div class="mb-4">
+        <h3 class="text-2xl md:text-3xl font-semibold">Research Paper</h3>
+        <p class="text-sm text-slate-600 mt-1">Selected publications & experiments</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <article class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm experience-card" data-full-id="research" tabindex="0" role="button" aria-label="Open research details">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold">Sessile Drop Imaging & Analysis</div>
+              <div class="text-sm text-slate-600">Conference Paper / Lab Project</div>
+            </div>
+            <div class="text-sm text-slate-500">2024 • Waterloo, ON</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 items-start">
+            <div class="img-card" role="button" tabindex="0" aria-hidden="true">
+              <!-- placeholder research photo (replace with ./research_photo.jpg if you add it) -->
+              <img class="thumb" alt="Research thumbnail" src="./SEM.jpg" loading="lazy">
+            </div>
+
+            <div class="text-sm text-slate-600">
+              <div class="mb-2">• Automated image processing for contact angle measurement</div>
+              <div class="text-xs text-slate-400">Click to expand for full description and video.</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </main>
 
   <!-- overlay -->
@@ -558,7 +591,7 @@
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--line-alpha-mult')) || 1;
     }
 
-    class Node {
+    class NodeLocal {
       constructor() {
         const margin = 0.08;
         this.x0 = rand(w * margin, w * (1 - margin));
@@ -569,40 +602,35 @@
         this.vy = rand(-0.25, 0.25);
         this.r = rand(1.2, 3.0);
         this.alpha = rand(0.06, 0.22);
-        this.maxDisp = rand(46, 110); // a bit more give so mouse moves them more
+        this.maxDisp = rand(46, 110);
       }
 
       step(dt) {
-        const k = 0.010; // slightly softer spring so mouse can move nodes more
+        const k = 0.010;
         const dx = this.x0 - this.x;
         const dy = this.y0 - this.y;
         const noise = 0.09 * (Math.sin((this.x0 + this.y0) * 0.001 + performance.now()*0.00055));
         this.vx += (dx * k + noise * (Math.random()-0.5));
         this.vy += (dy * k + noise * (Math.random()-0.5));
 
-        // mouse interaction: increased influence for more "interactive" feel
         if (mouse.active) {
           const mx = this.x - mouse.x;
           const my = this.y - mouse.y;
           const dist = Math.sqrt(mx*mx + my*my) + 0.0001;
-          const R = 220; // larger radius so mouse affects more nodes
+          const R = 220;
           if (dist < R) {
-            // much stronger force than before (user requested more movement)
-            const strength = (1 - (dist / R)) * 1.6; // up to ~1.6
-            this.vx += (mx / dist) * strength * 1.6; // extra multiplier
+            const strength = (1 - (dist / R)) * 1.6;
+            this.vx += (mx / dist) * strength * 1.6;
             this.vy += (my / dist) * strength * 1.6;
           }
         }
 
-        // damping
         this.vx *= 0.90;
         this.vy *= 0.90;
 
-        // integrate
         this.x += this.vx * (dt || 1);
         this.y += this.vy * (dt || 1);
 
-        // clamp back if too far from origin (soft)
         const ox = this.x - this.x0;
         const oy = this.y - this.y0;
         const od = Math.sqrt(ox*ox + oy*oy);
@@ -612,7 +640,6 @@
           this.vy -= (oy / od) * back;
         }
 
-        // safety wrap
         if (this.x < -60) this.x = w + 60;
         if (this.x > w + 60) this.x = -60;
         if (this.y < -60) this.y = h + 60;
@@ -620,7 +647,6 @@
       }
 
       draw(ctx, rgbStr, alphaMult) {
-        // glow built from CSS variable and mode
         const colorBase = rgbStr || '99,102,241';
         const alpha = Math.min(0.45, this.alpha * (alphaMult || 1));
 
@@ -632,7 +658,6 @@
         ctx.fillStyle = g;
         ctx.fillRect(this.x - glowRadius, this.y - glowRadius, glowRadius*2, glowRadius*2);
 
-        // core
         ctx.beginPath();
         ctx.fillStyle = `rgba(${colorBase},${0.78})`;
         ctx.globalAlpha = Math.min(0.86, alpha * 1.05);
@@ -644,11 +669,10 @@
 
     function initParticles(){
       particles.length = 0;
-      for (let i=0;i<COUNT;i++) particles.push(new Node());
+      for (let i=0;i<COUNT;i++) particles.push(new NodeLocal());
     }
     initParticles();
 
-    // nearest neighbor computation for stronger net
     function computeNearestNeighbors(k) {
       const neighbors = new Array(particles.length);
       for (let i = 0; i < particles.length; i++) {
@@ -675,10 +699,9 @@
 
       neighborTicker++;
       if (!cachedNeighbors || neighborTicker % 5 === 0) {
-        cachedNeighbors = computeNearestNeighbors(4); // connect to 4 nearest for denser net
+        cachedNeighbors = computeNearestNeighbors(4);
       }
 
-      // stronger nearest lines
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         const list = cachedNeighbors[i] || [];
@@ -698,7 +721,6 @@
         }
       }
 
-      // additional faint links (distance-based)
       const TH2 = 220;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
@@ -724,7 +746,6 @@
       ctx.restore();
     }
 
-    // animation
     let raf = null;
     let last = performance.now();
     function loop(now){
@@ -733,36 +754,31 @@
 
       ctx.clearRect(0,0,w,h);
 
-      // subtle wash to blend with page
       const bg = ctx.createLinearGradient(0,0,0,h);
       bg.addColorStop(0, 'rgba(255,255,255,0.02)');
       bg.addColorStop(1, 'rgba(240,248,255,0.02)');
       ctx.fillStyle = bg;
       ctx.fillRect(0,0,w,h);
 
-      // step
       for (let p of particles) p.step(dt);
 
-      // prepare mode-aware color & alpha multipliers
       const rgbStr = getNodeColorRGB();
       const alphaMult = getAlphaMult();
       const lineMult = getLineAlphaMult();
 
-      // draw connections then nodes
       drawConnections(rgbStr, lineMult);
       for (let p of particles) p.draw(ctx, rgbStr, alphaMult);
 
       raf = requestAnimationFrame(loop);
     }
 
-    // mouse interactions
     canvas.addEventListener('mousemove', function(e){
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
       mouse.active = true;
       clearTimeout(mouse._t);
-      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650); // slightly snappier
+      mouse._t = setTimeout(()=>{ mouse.active = false; }, 650);
     }, { passive: true });
 
     canvas.addEventListener('touchmove', function(e){
@@ -815,7 +831,7 @@
     var gallery = [];
     var galleryIndex = 0;
 
-    // details for overlays (education & experience)
+    // details for overlays (education & experience & research)
     var detailsMap = {
       "h2nano": {
         "title": "Material Science Specialist",
@@ -874,6 +890,18 @@
           "Characterized materials through variety of instrumental methods including SEM",
           "Synthesized silicon wafers through PVD and Lithography to perform Ellipsometry; acquainted with MOSFETs and fundamentals of nanoelectronics; hands-on photonics labs"
         ]
+      },
+      "research": {
+        "title": "Sessile Drop Imaging & Analysis",
+        "subtitle": "Automated contact angle measurement pipeline",
+        "date": "2024 • Waterloo, ON",
+        "items": [
+          "Developed automated pipeline for droplet edge detection and contact angle estimation",
+          "Combined low-cost imaging hardware with Python processing to make repeatable measurements",
+          "Validated against manual measurements and improved reproducibility",
+          "Video walkthrough and dataset included"
+        ],
+        "long_description": "This work focuses on an integrated hardware + software pipeline for sessile-drop contact angle measurement. It pairs a low-cost imaging rig with automated image processing to extract droplet profiles and compute contact angles. The approach uses edge-detection preprocessing, polynomial fitting, and multiple-frame averaging to reduce noise and increase repeatability. A video demo (right) shows the imaging rig and the step-by-step processing pipeline."
       }
     };
 
@@ -1073,12 +1101,50 @@
       el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
     });
 
-    // build detail overlay (logo optional)
+    // build detail overlay (logo optional) — special-case 'research' to include video
     function buildDetailOverlay(detailKey, logoSrc, showLogo) {
       var info = detailsMap[detailKey];
       if (!info) return null;
       var wrapper = document.createElement('div');
       wrapper.className = 'detail-wrap';
+
+      // Research special layout: left = video, right = text
+      if (detailKey === 'research') {
+        var left = document.createElement('div');
+        left.style.flex = '0 0 420px';
+        left.style.maxWidth = '420px';
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        left.style.justifyContent = 'center';
+        left.style.borderRadius = '12px';
+        left.style.overflow = 'hidden';
+        left.style.background = 'linear-gradient(180deg,#f8fbff,#eef6ff)';
+        left.style.padding = '6px';
+        var vid = document.createElement('video');
+        vid.controls = true;
+        vid.playsInline = true;
+        vid.style.width = '100%';
+        vid.style.maxHeight = '60vh';
+        // Use local repo filename - replace with actual file if you add it to the repo
+        vid.src = './research_video.mp4';
+        vid.poster = './research_photo.jpg';
+        left.appendChild(vid);
+        wrapper.appendChild(left);
+
+        var right = document.createElement('div');
+        right.className = 'detail-text detail-scroll';
+        var inner = '<h3>' + info.title + '</h3>';
+        if (info.subtitle) inner += '<div class="text-sm text-slate-600" style="margin-bottom:6px;">' + info.subtitle + '</div>';
+        inner += '<div class="meta">' + info.date + '</div>';
+        if (info.long_description) inner += '<p style="margin-bottom:10px;">' + info.long_description + '</p>';
+        inner += '<ul style="margin-top:8px;">';
+        info.items.forEach(function(item){ inner += '<li>' + item + '</li>'; });
+        inner += '</ul>';
+        right.innerHTML = inner;
+        wrapper.appendChild(right);
+
+        return wrapper;
+      }
 
       // left: logo (only for work experience; education passes showLogo=false)
       if (showLogo) {
@@ -1116,8 +1182,8 @@
       return wrapper;
     }
 
-    // attach click handlers for experience and education cards
-    document.querySelectorAll('.experience-card').forEach(function(card){
+    // attach click handlers for experience, education and research cards
+    document.querySelectorAll('.experience-card, section#research .experience-card').forEach(function(card){
       card.addEventListener('click', function(){
         var key = card.dataset.fullId;
         // find logo if available (but for education we will not show the logo)
@@ -1125,17 +1191,20 @@
         var logoSrc = logoImg ? logoImg.src : null;
 
         // if education -> only show text (showLogo false)
-        var showLogo = key !== 'education-full';
+        var showLogo = key !== 'education-full' && key !== 'research';
         var node = buildDetailOverlay(key, logoSrc, showLogo);
         if (node) {
-          // set header title and subtitle/date for this specific detail block
           var infoForHeader = detailsMap[key];
           var headerTitle = infoForHeader ? infoForHeader.title : '';
           openOverlay(headerTitle, node);
 
-          // replace zoomSub with subtitle + date for these detail overlays
           if (infoForHeader) {
-            zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
+            if (key === 'research') {
+              // research uses long subtitle/date in zoomSub
+              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
+            } else {
+              zoomSub.textContent = (infoForHeader.subtitle ? infoForHeader.subtitle + ' • ' : '') + infoForHeader.date;
+            }
           }
         }
       });
@@ -1158,21 +1227,21 @@
       el.addEventListener('keydown', function(e){ if (e.key === 'Enter') el.click(); });
     });
 
-    // resume & portfolio preview handlers (header download shown, bottom close removed)
+    // resume & portfolio preview handlers (header download shown, bottom close removed) - filenames updated to 2026
     var resumeLink = document.getElementById('resumeLink');
     var portfolioLink = document.getElementById('portfolioLink');
     if (resumeLink) {
       resumeLink.addEventListener('click', function(e){
         e.preventDefault();
         var url = resumeLink.getAttribute('href');
-        openOverlay('Resume — Preview', url, { filePreview: true, fileName: 'Edward Hong Resume - 2025.pdf' });
+        openOverlay('Resume — Preview', url, { filePreview: true, fileName: 'Edward Hong Resume - 2026.pdf' });
       });
     }
     if (portfolioLink) {
       portfolioLink.addEventListener('click', function(e){
         e.preventDefault();
         var url = portfolioLink.getAttribute('href');
-        openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2025.pdf' });
+        openOverlay('Portfolio — Preview', url, { filePreview: true, fileName: 'Edward Hong Portfolio - 2026.pdf' });
       });
     }
 
@@ -1186,7 +1255,6 @@
 
     function renderToggleIcon(isDark) {
       if (!darkIcon) return;
-      // update icon
       if (isDark) {
         darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
         darkIcon.style.color = 'var(--primary)';
@@ -1196,11 +1264,10 @@
         darkIcon.style.color = 'var(--primary)';
         toggle.setAttribute('aria-pressed','false');
       }
-      // update label text to show the *action* (so when dark is ON, label reads "Light mode" meaning click will go to light)
+      // the label shows the action you can take
       if (toggleLabel) toggleLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
     }
 
-    // initialize from localStorage or default (light)
     const stored = localStorage.getItem('eh_portfolio_darkmode');
     const initialIsDark = stored === '1';
     if (initialIsDark) ROOT.classList.add('dark-mode');
