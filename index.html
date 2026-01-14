@@ -351,34 +351,33 @@
 
           <div class="flex items-center justify-between">
             <div>
-              <div class="font-semibold">
+              <div class="font-semibold" style="line-height:1.1;">
                 <a href="https://doi.org/10.1039/D5TA08956E" target="_blank" rel="noreferrer"
                    style="font-weight:700; text-decoration:underline; color:var(--text);">
                   Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy
                 </a>
-                <span style="font-size:12px; font-weight:700; color:var(--primary); margin-left:8px;">Co-authored</span>
+                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-top:6px;">Co-authored</div>
               </div>
               <div class="text-sm text-slate-600">Surface-energy directed chemical gradients — DMAPS / MAA</div>
             </div>
             <div class="text-sm text-slate-500">2024 • Waterloo, ON</div>
           </div>
 
-          <div class="mt-3 text-sm text-slate-600 space-y-2">
-            <div>• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
-            <div>• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
-          </div>
+          <div class="mt-3">
+            <div class="grid md:grid-cols-2 gap-3 items-start">
+              <!-- left: research photo -->
+              <div class="img-card education-thumb img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
+                <img class="thumb w-full h-auto" alt="Hydrogel Demo Pic" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
+              </div>
 
-          <div class="mt-4 grid grid-cols-2 gap-3">
-            <!-- left: research photo -->
-            <div class="img-card education-thumb img-placeholder" data-title="Hydrogel demo" role="button" tabindex="0" aria-label="Open Hydrogel preview">
-              <img class="thumb w-full h-auto" alt="Hydrogel Demo Pic" src="./Hydrogel%20Demo%20Pic.jpg" loading="lazy">
-            </div>
-
-            <!-- right: quick bullet list -->
-            <div class="text-sm text-slate-600">
-              <div class="mb-2">• Automated image processing for droplet profiling</div>
-              <div class="mb-2">• Video demonstration included (Hydrogel Demo Vid)</div>
-              <div class="text-xs text-slate-400">Click to expand for full description, video and downloadable paper.</div>
+              <!-- right: quick bullet list (all bullets moved here) -->
+              <div class="text-sm text-slate-600 flex flex-col justify-center">
+                <div class="mb-2">• Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.</div>
+                <div class="mb-2">• Programmed bending and complex shape morphing via surface-energy directed monomer migration.</div>
+                <div class="mb-2">• Automated image processing for droplet profiling</div>
+                <div class="mb-2">• Video demonstration included (Hydrogel Demo Vid)</div>
+                <div class="text-xs text-slate-400 mt-2">Click to expand for full description and video.</div>
+              </div>
             </div>
           </div>
         </article>
@@ -911,14 +910,14 @@
         "title": "Shape-change programming of zwitterionic hydrogels (Co-authored)",
         "subtitle": "Surface-energy directed chemical gradients — DMAPS / MAA",
         "date": "Published 2026",
-        // updated bullets per your request, in the requested order
+        // bullets to be shown in right side (these will also appear in the zoom overlay)
         "items": [
           "Characterized with SEM, fluorescence imaging; combined with COMSOL to validate mechanisms.",
           "Programmed bending and complex shape morphing via surface-energy directed monomer migration.",
           "Automated image processing for droplet profiling",
           "Video demonstration included (Hydrogel Demo Vid)"
         ],
-        "long_description": "This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations. The work includes imaging, compositional analysis, and COMSOL modeling to support the mechanism and potential soft-robotics applications."
+        "long_description": "This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations. The approach includes imaging, compositional analysis, and COMSOL modeling to support the mechanism and potential soft-robotics applications."
       }
     };
 
@@ -1107,32 +1106,80 @@
 
         // Special case: if this placeholder is inside #research, open a composite node:
         if (el.closest('#research')) {
-          // build an image+caption overlay when clicking the research image
+          // build an image+caption+video overlay when clicking the research image
           var img = el.querySelector('img');
           if (img) {
-            var wrap = document.createElement('div');
-            wrap.style.width = '100%';
-            wrap.style.display = 'flex';
-            wrap.style.flexDirection = 'column';
-            wrap.style.alignItems = 'center';
-            wrap.style.gap = '10px';
+            // Build left (image) + right (text) layout similar to detail overlay
+            var wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '20px';
+            wrapper.style.alignItems = 'stretch';
+            wrapper.style.width = '100%';
+            wrapper.style.boxSizing = 'border-box';
+
+            // left: image + formal citation beneath
+            var left = document.createElement('div');
+            left.style.flex = '0 0 44%';
+            left.style.display = 'flex';
+            left.style.flexDirection = 'column';
+            left.style.alignItems = 'stretch';
+            left.style.gap = '10px';
 
             var big = document.createElement('img');
             big.src = img.src;
             big.alt = img.alt || 'Research image';
             big.className = 'zoom-img';
-            wrap.appendChild(big);
+            big.style.borderRadius = '10px';
+            left.appendChild(big);
 
-            var caption = document.createElement('div');
-            caption.style.width = '100%';
-            caption.style.fontSize = '13px';
-            caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
-            caption.style.textAlign = 'center';
-            caption.style.fontStyle = 'italic';
-            caption.textContent = 'Fig. 4e — Shape-change programming of zwitterionic hydrogels (Co-authored)';
-            wrap.appendChild(caption);
+            var citation = document.createElement('div');
+            citation.style.fontSize = '13px';
+            citation.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
+            citation.style.textAlign = 'center';
+            citation.style.marginTop = '6px';
+            citation.style.fontStyle = 'normal';
+            // More formal citation (best effort)
+            citation.textContent = 'E. Hong et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
+            left.appendChild(citation);
 
-            openOverlay('Hydrogel — image', wrap);
+            wrapper.appendChild(left);
+
+            // right: long description + bullets, vertically centered
+            var right = document.createElement('div');
+            right.style.flex = '1';
+            right.style.display = 'flex';
+            right.style.flexDirection = 'column';
+            right.style.justifyContent = 'center';
+            right.style.gap = '10px';
+            right.style.padding = '6px 12px';
+
+            var long = document.createElement('div');
+            long.style.marginBottom = '6px';
+            long.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#0f172a';
+            long.textContent = 'This project developed a method to program shape-change in zwitterionic hydrogels by directing monomer migration using surface energy contrasts (DMAPS/MAA). The technique yields reproducible, pH-responsive gradients that produce rapid and programmable bending and 2D→3D transformations.';
+            right.appendChild(long);
+
+            var ul = document.createElement('ul');
+            ul.style.paddingLeft = '18px';
+            ul.style.marginTop = '6px';
+            var bullets = detailsMap['research'].items || [];
+            bullets.forEach(function(b){
+              var li = document.createElement('li');
+              li.style.marginBottom = '8px';
+              li.textContent = b;
+              ul.appendChild(li);
+            });
+            right.appendChild(ul);
+
+            wrapper.appendChild(right);
+
+            openOverlay('Hydrogel — details', wrapper, { expandWidth: true });
+            // set zoomSub to subtitle + date
+            zoomSub.textContent = detailsMap['research'].subtitle + ' • ' + detailsMap['research'].date;
+            // configure headerDownload for PDF
+            headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
+            headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
+            headerDownload.style.display = 'inline-block';
             return;
           }
         }
@@ -1173,20 +1220,19 @@
       el.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') el.click(); });
     });
 
-    // build detail overlay (logo optional) — special-case 'research' to include video + image and expanded area
+    // build detail overlay (logo optional) — research returns node+opts when used in card click
     function buildDetailOverlay(detailKey, logoSrc, showLogo) {
       var info = detailsMap[detailKey];
       if (!info) return null;
 
       var wrapper = document.createElement('div');
-      // make wrapper fill and match the card aesthetic
       wrapper.className = 'detail-wrap';
       wrapper.style.width = '100%';
       wrapper.style.boxSizing = 'border-box';
-      wrapper.style.background = 'transparent'; // zoomPanel already provides card bg
+      wrapper.style.background = 'transparent';
       wrapper.style.padding = '6px 0';
 
-      // Research special layout: left = image + video stack, right = text (only bullets), centered vertically
+      // Research special layout: left = image + video stack, right = long_description + bullets (centered vertically)
       if (detailKey === 'research') {
         var left = document.createElement('div');
         left.style.flex = '0 0 44%';
@@ -1206,14 +1252,14 @@
         img.style.objectFit = 'cover';
         left.appendChild(img);
 
-        // caption under image (citation)
-        var caption = document.createElement('div');
-        caption.style.fontSize = '12px';
-        caption.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
-        caption.style.marginTop = '6px';
-        caption.style.fontStyle = 'italic';
-        caption.textContent = 'Fig. 4e — Shape-change programming of zwitterionic hydrogels (Co-authored)';
-        left.appendChild(caption);
+        // formal citation under image (zoomed-in box will include this)
+        var citation = document.createElement('div');
+        citation.style.fontSize = '12px';
+        citation.style.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#6b7280';
+        citation.style.marginTop = '6px';
+        citation.style.fontStyle = 'italic';
+        citation.textContent = 'E. Hong et al., "Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy", 2026. DOI:10.1039/D5TA08956E';
+        left.appendChild(citation);
 
         // video
         var vid = document.createElement('video');
@@ -1231,19 +1277,20 @@
         right.className = 'detail-text detail-scroll';
         right.style.flex = '1';
         right.style.paddingLeft = '18px';
-        // center vertically: make column flex and center
+        // center vertically
         right.style.display = 'flex';
         right.style.flexDirection = 'column';
         right.style.justifyContent = 'center';
 
-        // Only the bullet points (in requested order) — no top title/subtitle/date in the right area
-        var inner = '<ul style="margin-top:0; padding-left: 18px;">';
+        // long description then bullets (the "zoomed-in text" restored to previous long_description + bullets)
+        var inner = '<p style="margin-bottom:12px;">' + info.long_description + '</p>';
+        inner += '<ul style="margin-top:0; padding-left: 18px;">';
         info.items.forEach(function(item){ inner += '<li style="margin-bottom:10px;">' + item + '</li>'; });
         inner += '</ul>';
         right.innerHTML = inner;
         wrapper.appendChild(right);
 
-        // configure headerDownload to point to the uploaded paper
+        // configure headerDownload to point to the uploaded paper file
         headerDownload.href = './Shape-change programming of zwitterionic hydrogels via chemical gradients directed by surface energy.pdf';
         headerDownload.setAttribute('download', 'Shape-change_hydrogels_2026.pdf');
         headerDownload.style.display = 'inline-block';
@@ -1251,8 +1298,7 @@
         return { node: wrapper, opts: { expandWidth: true } };
       }
 
-      // fallback: original detail builder for other keys
-      // left: logo (only for work experience; education passes showLogo=false)
+      // fallback for other detail types
       if (showLogo) {
         var left = document.createElement('div');
         left.style.flex = '0 0 auto';
@@ -1274,7 +1320,6 @@
         wrapper.appendChild(left);
       }
 
-      // right: text only
       var right = document.createElement('div');
       right.className = 'detail-text detail-scroll';
       var inner = '<h3>' + info.title + '</h3>';
